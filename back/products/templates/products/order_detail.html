@@ -1,0 +1,75 @@
+{% extends 'products/base.html' %}
+
+{% block title %}Заказ #{{ order.id }} - TechnoWorld{% endblock %}
+
+{% block content %}
+<div class="order-detail">
+    <h1>Заказ #{{ order.id }}</h1>
+    
+    <div class="order-status">
+        <strong>Статус:</strong>
+        <span class="badge 
+            {% if order.status == 'pending' %}badge-pending
+            {% elif order.status == 'paid' %}badge-approved
+            {% elif order.status == 'shipped' %}badge-approved
+            {% elif order.status == 'completed' %}badge-approved
+            {% elif order.status == 'cancelled' %}badge-rejected
+            {% endif %}">
+            {{ order.get_status_display }}
+        </span>
+    </div>
+    
+    <div class="order-info">
+        <h3>Информация о заказе</h3>
+        <p><strong>Дата:</strong> {{ order.created_at|date:"d.m.Y H:i" }}</p>
+        <p><strong>Сумма:</strong> {{ order.total_amount }} ₽</p>
+    </div>
+    
+    <div class="delivery-info">
+        <h3>Данные доставки</h3>
+        <p><strong>Адрес:</strong> {{ order.address|default:"Не указан" }}</p>
+        <p><strong>Телефон:</strong> {{ order.phone|default:"Не указан" }}</p>
+        <p><strong>Комментарий:</strong> {{ order.comment|default:"—" }}</p>
+    </div>
+    
+    <div class="order-items">
+        <h3>Товары в заказе</h3>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Товар</th>
+                    <th>Вариация</th>
+                    <th>Количество</th>
+                    <th>Цена</th>
+                    <th>Сумма</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in order.items.all %}
+                <tr>
+                    <td>{{ item.product_name }}</td>
+                    <td>{{ item.variant_name|default:"—" }}</td>
+                    <td>{{ item.quantity }}</td>
+                    <td>{{ item.price_at_moment }} ₽</td>
+                    <td>{{ item.get_total }} ₽</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="4"><strong>Итого:</strong></td>
+                    <td><strong>{{ order.total_amount }} ₽</strong></td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+    
+    <div class="order-actions">
+        <a href="{% url 'products:product_list' %}" class="btn">Продолжить покупки</a>
+        {% if user.is_authenticated %}
+            <a href="{% url 'products:profile' %}" class="btn">Личный кабинет</a>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}

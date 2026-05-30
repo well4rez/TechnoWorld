@@ -1,0 +1,130 @@
+/* responsive.css - Адаптивность */
+
+@media (max-width: 1024px) {
+    .product-grid {
+        grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+        gap: 20px;
+    }
+}
+
+@media (max-width: 768px) {
+    body {
+        padding: 10px;
+    }
+    
+    .nav {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .dropdown {
+        width: 100%;
+    }
+    
+    .dropdown button {
+        width: 100%;
+    }
+    
+    .dropdown-content {
+        position: static;
+        display: none;
+        width: 100%;
+    }
+    
+    .dropdown:hover .dropdown-content {
+        display: block;
+    }
+    
+    input[type="text"] {
+        width: 100%;
+    }
+    
+    .footer-content {
+        flex-direction: column;
+    }
+    
+    .product-detail {
+        flex-direction: column;
+    }
+    
+    .product-detail-image img {
+        height: 300px;
+    }
+    
+    .product-detail-title {
+        font-size: 24px;
+    }
+    
+    .product-detail-price {
+        font-size: 28px;
+    }
+    
+    .category-header h2 {
+        font-size: 24px;
+    }
+    
+    .category-icon {
+        width: 60px;
+        height: 60px;
+    }
+    
+    .data-table {
+        font-size: 12px;
+    }
+    
+    .data-table th, .data-table td {
+        padding: 8px;
+    }
+    
+    button, .btn {
+        width: 100%;
+        text-align: center;
+    }
+    
+    .profile-info strong {
+        display: block;
+        width: 100%;
+        margin-bottom: 5px;
+    }
+}
+
+@media (max-width: 480px) {
+    .product-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .product-card-image {
+        height: 180px;
+    }
+    
+    .empty-state-icon {
+        font-size: 48px;
+    }
+    
+    .empty-state h3 {
+        font-size: 18px;
+    }
+}
+
+@media (max-width: 768px) {
+
+    .header {
+        padding: 18px;
+    }
+
+    .content {
+        padding: 18px;
+    }
+
+    .product-card {
+        padding: 14px;
+    }
+
+    .product-detail {
+        gap: 20px;
+    }
+
+    .product-detail-title {
+        font-size: 26px;
+    }
+}

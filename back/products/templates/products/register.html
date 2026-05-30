@@ -1,0 +1,105 @@
+{% extends 'products/base.html' %}
+
+{% block title %}Регистрация - TechnoWorld{% endblock %}
+
+{% block content %}
+<style>
+    .form-group {
+        margin-bottom: 15px;
+    }
+    .form-group label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: bold;
+    }
+    .form-control {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        font-size: 14px;
+    }
+    .errorlist {
+        color: red;
+        list-style: none;
+        margin: 5px 0;
+        padding: 0;
+    }
+    .btn-primary {
+        background-color: #007bff;
+        color: white;
+        border: none;
+        padding: 12px 20px;
+        border-radius: 5px;
+        cursor: pointer;
+        width: 100%;
+        font-size: 16px;
+    }
+    .btn-primary:hover {
+        background-color: #0056b3;
+    }
+</style>
+
+<div style="max-width: 500px; margin: 0 auto;">
+    <h2>Регистрация</h2>
+    
+    <form method="post">
+        {% csrf_token %}
+        
+        <div class="form-group">
+            <label for="id_username">Имя пользователя</label>
+            <input type="text" name="username" id="id_username" class="form-control" required>
+            {% if form.username.errors %}
+                <ul class="errorlist">
+                    {% for error in form.username.errors %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        </div>
+        
+        <div class="form-group">
+            <label for="id_email">Email</label>
+            <input type="email" name="email" id="id_email" class="form-control">
+            {% if form.email.errors %}
+                <ul class="errorlist">
+                    {% for error in form.email.errors %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        </div>
+        
+        <div class="form-group">
+            <label for="id_password1">Пароль</label>
+            <input type="password" name="password1" id="id_password1" class="form-control" required>
+            {% if form.password1.errors %}
+                <ul class="errorlist">
+                    {% for error in form.password1.errors %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+            <small style="color: #666;">Пароль должен содержать не менее 8 символов</small>
+        </div>
+        
+        <div class="form-group">
+            <label for="id_password2">Подтверждение пароля</label>
+            <input type="password" name="password2" id="id_password2" class="form-control" required>
+            {% if form.password2.errors %}
+                <ul class="errorlist">
+                    {% for error in form.password2.errors %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        </div>
+        
+        <button type="submit" class="btn-primary">Зарегистрироваться</button>
+    </form>
+    
+    <p style="margin-top: 15px; text-align: center;">
+        Уже есть аккаунт? <a href="{% url 'products:login' %}">Войти</a>
+    </p>
+</div>
+{% endblock %}

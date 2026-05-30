@@ -1,0 +1,59 @@
+{% extends 'products/base.html' %}
+
+{% block title %}Корзина - TechnoWorld{% endblock %}
+
+{% block content %}
+<h1>🛒 Корзина</h1>
+
+{% if items %}
+    <table class="cart-table">
+        <thead>
+            <tr>
+                <th>Товар</th>
+                <th>Цена</th>
+                <th>Количество</th>
+                <th>Сумма</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in items %}
+            <tr>
+                <td>{{ item.get_display_name }}</td>
+                <td>{{ item.price_at_moment }} ₽</td>
+                <td>
+                    <form method="post" action="{% url 'products:update_cart_quantity' item.id %}">
+                        {% csrf_token %}
+                        <input type="number" name="quantity" value="{{ item.quantity }}" min="1" style="width: 60px;">
+                        <button type="submit">Обновить</button>
+                    </form>
+                </td>
+                <td>{{ item.get_total }} ₽</td>
+                <td>
+                    <a href="{% url 'products:remove_from_cart' item.id %}" class="btn-remove">Удалить</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+        <tfoot>
+            <tr>
+                <td colspan="3"><strong>Итого:</strong></td>
+                <td><strong>{{ total_price }} ₽</strong></td>
+                <td></td>
+            </tr>
+        </tfoot>
+    </table>
+    
+    <div>
+        <a href="{% url 'products:product_list' %}" class="btn">Продолжить покупки</a>
+        <a href="{% url 'products:checkout' %}" class="btn btn-success">Оформить заказ</a>
+    </div>
+{% else %}
+    <div class="empty-cart">
+        <div class="empty-cart-icon">🛒</div>
+        <h3>Корзина пуста</h3>
+        <p>Добавьте товары из каталога</p>
+        <a href="{% url 'products:product_list' %}" class="btn">Перейти в каталог</a>
+    </div>
+{% endif %}
+{% endblock %}

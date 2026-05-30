@@ -1,0 +1,69 @@
+{% extends 'products/base.html' %}
+
+{% block title %}{{ current_category.name }} - TechnoWorld{% endblock %}
+
+{% block content %}
+<div class="category-page">
+    <!-- Шапка категории -->
+    <div class="category-header">
+        {% if current_category.image %}
+            <img src="{{ current_category.image.url }}" alt="{{ current_category.name }}" class="category-header-image">
+        {% else %}
+            <div class="category-header-icon">📁</div>
+        {% endif %}
+        
+        <h1 class="category-title">{{ current_category.name }}</h1>
+        
+        <div class="category-count">
+            📦 {{ products|length }} товаров
+        </div>
+    </div>
+
+    <!-- Список товаров -->
+    {% if products %}
+        <div class="product-grid">
+            {% for product in products %}
+                <div class="product-card">
+                    <a href="{% url 'products:product_detail' product.slug %}">
+                        {% if product.image %}
+                            <img src="{{ product.image.url }}" alt="{{ product.name }}" class="product-card-image">
+                        {% else %}
+                            <div class="product-card-placeholder">
+                                📷 Нет фото
+                            </div>
+                        {% endif %}
+                    </a>
+                    
+                    <div class="product-card-brand">
+                        {% if product.brand %}
+                            {% if product.brand.image %}
+                                <img src="{{ product.brand.image.url }}" alt="{{ product.brand.name }}" class="brand-logo-small">
+                            {% endif %}
+                            <span>{{ product.brand.name }}</span>
+                        {% endif %}
+                    </div>
+                    
+                    <a href="{% url 'products:product_detail' product.slug %}" class="product-card-title">
+                        {{ product.name }}
+                    </a>
+                    
+                    <div class="product-card-price">
+                        {{ product.price }} ₽
+                    </div>
+                    
+                    <div class="product-card-stock">
+                        ✅ В наличии: {{ product.amount }} шт.
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="empty-category">
+            <div class="empty-category-icon">🔍</div>
+            <h3>В этой категории пока нет товаров</h3>
+            <p>Загляните позже — мы постоянно пополняем ассортимент!</p>
+            <a href="{% url 'products:product_list' %}" class="btn">На главную</a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

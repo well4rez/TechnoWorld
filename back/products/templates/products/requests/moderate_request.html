@@ -1,0 +1,51 @@
+{% extends 'products/base.html' %}
+
+{% block title %}Модерация заявки #{{ request.id }} - TechnoWorld{% endblock %}
+
+{% block content %}
+<h2>📝 Модерация заявки #{{ request.id }}</h2>
+
+<div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
+    <p><strong>👤 Менеджер:</strong> {{ request.created_by.username }}</p>
+    <p><strong>📅 Дата:</strong> {{ request.created_at|date:"d.m.Y H:i" }}</p>
+    <p><strong>📌 Тип:</strong> {{ request.get_type_display }}</p>
+    <p><strong>💬 Комментарий менеджера:</strong> {{ request.comment|default:"—" }}</p>
+    
+    <h3>Данные заявки:</h3>
+    <pre style="background: white; padding: 15px; border-radius: 5px; overflow-x: auto;">{{ request.data|pprint }}</pre>
+</div>
+
+<form method="post">
+    {% csrf_token %}
+    
+    <div class="form-group">
+        <label>Ответ администратора:</label>
+        <textarea name="admin_response" rows="4" class="form-control">{% if request.admin_response %}{{ request.admin_response }}{% endif %}</textarea>
+    </div>
+    
+    <button type="submit" name="action" value="approve" style="background: #28a745; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">✅ Одобрить</button>
+    <button type="submit" name="action" value="reject" style="background: #dc3545; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">❌ Отклонить</button>
+    <a href="{% url 'products:pending_requests' %}" style="background: #6c757d; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; text-decoration: none;">← Назад</a>
+</form>
+
+{% if request.type == 'message' %}
+    <div style="background: #e3f2fd; padding: 20px; border-radius: 10px; margin: 15px 0;">
+        <h3>📨 Сообщение от менеджера</h3>
+        <p><strong>👤 Отправитель:</strong> {{ request.created_by.username }}</p>
+        <p><strong>📌 Тема:</strong> {{ request.data.subject }}</p>
+        <p><strong>⚠️ Приоритет:</strong> 
+            {% if request.data.priority == 'high' %}🔴 Высокий
+            {% elif request.data.priority == 'medium' %}🟡 Средний
+            {% else %}🟢 Низкий{% endif %}
+        </p>
+        <p><strong>💬 Текст сообщения:</strong></p>
+        <div style="background: white; padding: 15px; border-radius: 8px; margin-top: 10px;">
+            {{ request.data.message|linebreaks }}
+        </div>
+    </div>
+{% else %}
+    <div style="background: #f8f9fa; padding: 15px; border-radius: 5px; margin: 15px 0; overflow-x: auto;">
+        <pre>{{ request.data|pprint }}</pre>
+    </div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,33 @@
+{% extends 'products/base.html' %}
+
+{% block title %}{{ title }} - TechnoWorld{% endblock %}
+
+{% block content %}
+<style>
+    .form-group { margin-bottom: 15px; }
+    .form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
+    .form-control { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; }
+    .btn-primary { background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; }
+    .btn-secondary { background: #6c757d; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; text-decoration: none; display: inline-block; }
+</style>
+
+<div style="max-width: 600px; margin: 0 auto;">
+    <h2>{{ title }}</h2>
+    <form method="post">
+        {% csrf_token %}
+        
+        {% for field in form %}
+        <div class="form-group">
+            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+            {{ field }}
+            {% if field.errors %}
+                <div style="color: red;">{{ field.errors }}</div>
+            {% endif %}
+        </div>
+        {% endfor %}
+        
+        <button type="submit" class="btn-primary">Отправить заявку</button>
+        <a href="{% url 'products:my_requests' %}" class="btn-secondary">Отмена</a>
+    </form>
+</div>
+{% endblock %}

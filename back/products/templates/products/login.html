@@ -1,0 +1,62 @@
+{% extends 'products/base.html' %}
+
+{% block title %}Вход - TechnoWorld{% endblock %}
+
+{% block content %}
+<style>
+    .form-group {
+        margin-bottom: 15px;
+    }
+    .form-group label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: bold;
+    }
+    .form-control {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        font-size: 14px;
+    }
+    .btn-primary {
+        background-color: #007bff;
+        color: white;
+        border: none;
+        padding: 12px 20px;
+        border-radius: 5px;
+        cursor: pointer;
+        width: 100%;
+        font-size: 16px;
+    }
+    .btn-primary:hover {
+        background-color: #0056b3;
+    }
+</style>
+
+<div style="max-width: 500px; margin: 0 auto;">
+    <h2>Вход в аккаунт</h2>
+    <form method="post">
+        {% csrf_token %}
+        
+        {% for field in form %}
+            <div class="form-group">
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+                {% if field.errors %}
+                    <ul class="errorlist">
+                        {% for error in field.errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+        {% endfor %}
+        
+        <button type="submit" class="btn-primary">Войти</button>
+    </form>
+    <p style="margin-top: 15px; text-align: center;">
+        Нет аккаунта? <a href="{% url 'products:register' %}">Зарегистрироваться</a>
+    </p>
+</div>
+{% endblock %}

@@ -1,0 +1,48 @@
+{% extends 'products/base.html' %}
+
+{% block title %}TechnoWorld - Главная{% endblock %}
+
+{% block content %}
+    {% if current_category %}
+        <h2>{{ current_category.name }}</h2>
+    {% endif %}
+
+    {% if products %}
+        <div class="product-grid">
+            {% for product in products %}
+            <div class="product-card">
+                <a href="{% url 'products:product_detail' product.slug %}">
+                    {% if product.image %}
+                        <img src="{{ product.image.url }}" alt="{{ product.name }}" class="product-card-image">
+                    {% else %}
+                        <div class="product-card-placeholder">
+                            <span>Нет фото</span>
+                        </div>
+                    {% endif %}
+                    
+                    <h3 class="product-card-title">{{ product.name }}</h3>
+                </a>
+                
+                <p class="product-card-brand">{{ product.category.name }}</p>
+                
+                <!-- Отображение цены с учётом вариаций -->
+                {% if product.has_variants %}
+                    <p class="product-card-price">от {{ product.price }} ₽</p>
+                {% else %}
+                    <p class="product-card-price">{{ product.price }} ₽</p>
+                {% endif %}
+                
+                <p class="product-card-stock">В наличии: {{ product.amount }} шт.</p>
+                
+                <form method="post" action="{% url 'products:add_to_cart' product.id %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="{{ request.path }}">
+                    <button type="submit" class="btn btn-cart">🛒 В корзину</button>
+                </form>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p>Товаров не найдено</p>
+    {% endif %}
+{% endblock %}

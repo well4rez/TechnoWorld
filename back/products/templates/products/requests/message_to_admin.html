@@ -1,0 +1,86 @@
+{% extends 'products/base.html' %}
+
+{% block title %}Сообщение администратору - TechnoWorld{% endblock %}
+
+{% block content %}
+<style>
+    .form-group {
+        margin-bottom: 20px;
+    }
+    .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: bold;
+        font-size: 14px;
+    }
+    .form-control {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        font-size: 14px;
+    }
+    .form-control:focus {
+        outline: none;
+        border-color: #007bff;
+    }
+    .priority-high {
+        color: #dc3545;
+    }
+    .priority-medium {
+        color: #ffc107;
+    }
+    .priority-low {
+        color: #28a745;
+    }
+    .btn-primary {
+        background-color: #007bff;
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 16px;
+    }
+    .btn-primary:hover {
+        background-color: #0056b3;
+    }
+</style>
+
+<div style="max-width: 600px; margin: 0 auto;">
+    <h2>📨 Сообщение администратору</h2>
+    <p style="color: #666; margin-bottom: 20px;">Напишите администратору по любым вопросам или предложениям</p>
+    
+    <form method="post">
+        {% csrf_token %}
+        
+        <div class="form-group">
+            <label for="id_subject">Тема</label>
+            <input type="text" name="subject" id="id_subject" class="form-control" required>
+            {% if form.subject.errors %}
+                <div class="errorlist">{{ form.subject.errors }}</div>
+            {% endif %}
+        </div>
+        
+        <div class="form-group">
+            <label for="id_priority">Приоритет</label>
+            <select name="priority" id="id_priority" class="form-control">
+                <option value="low">🟢 Низкий</option>
+                <option value="medium">🟡 Средний</option>
+                <option value="high">🔴 Высокий</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label for="id_message">Сообщение</label>
+            <textarea name="message" id="id_message" class="form-control" rows="6" required></textarea>
+            {% if form.message.errors %}
+                <div class="errorlist">{{ form.message.errors }}</div>
+            {% endif %}
+        </div>
+        
+        <button type="submit" class="btn-primary">✉️ Отправить сообщение</button>
+        <a href="{% url 'products:my_requests' %}" class="btn" style="margin-left: 10px;">Отмена</a>
+    </form>
+</div>
+{% endblock %}

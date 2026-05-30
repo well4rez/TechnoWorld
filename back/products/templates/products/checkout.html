@@ -1,0 +1,51 @@
+{% extends 'products/base.html' %}
+
+{% block title %}Оформление заказа - TechnoWorld{% endblock %}
+
+{% block content %}
+<h1>📝 Оформление заказа</h1>
+
+<div style="display: flex; gap: 40px; flex-wrap: wrap;">
+    <div style="flex: 1;">
+        <h3>Ваши товары</h3>
+        <table class="cart-table">
+            <thead>
+                <tr><th>Товар</th><th>Кол-во</th><th>Сумма</th></tr>
+            </thead>
+            <tbody>
+                {% for item in items %}
+                <tr>
+                    <td>{{ item.get_display_name }}</td>
+                    <td>{{ item.quantity }}</td>
+                    <td>{{ item.get_total }} ₽</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot>
+                <tr><td colspan="2"><strong>Итого:</strong></td><td><strong>{{ total_price }} ₽</strong></td></tr>
+            </tfoot>
+        </table>
+    </div>
+    
+    <div style="flex: 1;">
+        <h3>Данные для доставки</h3>
+        <form method="post">
+            {% csrf_token %}
+            <div class="form-group">
+                <label>Адрес доставки</label>
+                <input type="text" name="address" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label>Телефон</label>
+                <input type="tel" name="phone" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label>Комментарий</label>
+                <textarea name="comment" class="form-control" rows="3"></textarea>
+            </div>
+            <button type="submit" class="btn btn-success">Подтвердить заказ</button>
+            <a href="{% url 'products:cart_view' %}" class="btn">Назад</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

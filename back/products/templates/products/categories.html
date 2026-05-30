@@ -1,0 +1,31 @@
+{% extends 'products/base.html' %}
+
+{% block title %}Каталог категорий - TechnoWorld{% endblock %}
+
+{% block content %}
+<div class="categories-page">
+    <h1 class="page-title">Каталог категорий</h1>
+    
+    <div class="categories-grid">
+        {% for category in categories %}
+            <a href="{% url 'products:category_list' category.slug %}" class="category-card">
+                {% if category.image %}
+                    <img src="{{ category.image.url }}" alt="{{ category.name }}" class="category-card-image">
+                {% else %}
+                    <div class="category-card-icon">📁</div>
+                {% endif %}
+                <h3 class="category-card-title">{{ category.name }}</h3>
+                <div class="category-card-count">
+                    {{ category.products.count }} товаров
+                </div>
+            </a>
+        {% empty %}
+            <div class="empty-state">
+                <div class="empty-state-icon">📂</div>
+                <h3>Категории пока не добавлены</h3>
+                <p>Загляните позже</p>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

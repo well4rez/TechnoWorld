@@ -1,0 +1,180 @@
+{% extends 'products/base.html' %}
+
+{% block title %}{{ product.name }} - TechnoWorld{% endblock %}
+
+{% block content %}
+<div class="product-detail-container">
+    <div class="product-detail">
+        <div class="product-detail-image">
+            {% if product.image %}
+                <img src="{{ product.image.url }}" alt="{{ product.name }}" id="main-product-image" class="product-main-image">
+            {% else %}
+                <div class="product-detail-placeholder" id="main-product-image">
+                    📷 Нет фото
+                </div>
+            {% endif %}
+        </div>
+        
+        <div class="product-detail-info">
+            <h1 class="product-detail-title">{{ product.name }}</h1>
+            
+            <div class="product-detail-meta">
+                <div class="meta-item">
+                    <strong>Бренд:</strong>
+                    {% if product.brand %}
+                        {% if product.brand.image %}
+                            <img src="{{ product.brand.image.url }}" alt="{{ product.brand.name }}" class="brand-logo">
+                        {% endif %}
+                        {{ product.brand.name }}
+                    {% else %}
+                        Не указан
+                    {% endif %}
+                </div>
+                
+                <div class="meta-item">
+                    <strong>Категория:</strong>
+                    {% if product.category.image %}
+                        <img src="{{ product.category.image.url }}" alt="{{ product.category.name }}" class="brand-logo">
+                    {% endif %}
+                    {{ product.category.name }}
+                </div>
+            </div>
+            
+            <!-- Выбор вариаций -->
+            {% if product.has_variants and product.variants.exists %}
+                <div class="variants-section">
+                    {% regroup product.variants.all by name as variant_groups %}
+                    {% for group in variant_groups %}
+                        <div class="variant-group">
+                            <div class="variant-buttons">
+                                {% for variant in group.list %}
+                                    <button type="button" 
+                                            class="variant-btn {% if forloop.first %}active{% endif %}" 
+                                            data-variant-id="{{ variant.id }}"
+                                            data-variant-price="{{ variant.get_price|floatformat:2 }}"
+                                            data-variant-image="{% if variant.image %}{{ variant.image.url }}{% endif %}"
+                                            data-variant-name="{{ variant.name }}"
+                                            data-variant-amount="{{ variant.amount }}">
+                                        {{ variant.name }}
+                                    </button>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+                
+                <div class="product-price-section">
+                    <span class="price-label">Цена:</span>
+                    <span class="product-price" id="variant-price">
+                        {% with first_variant=product.variants.first %}
+                            {{ first_variant.get_price|floatformat:2 }}
+                        {% endwith %}
+                    </span>
+                    <span class="price-currency">₽</span>
+                </div>
+                
+                <div class="stock-status" id="variant-stock">
+                    В наличии: 
+                    <span id="variant-amount">
+                        {% with first_variant=product.variants.first %}
+                            {{ first_variant.amount }}
+                        {% endwith %}
+                    </span> шт.
+                </div>
+                
+                <form method="post" action="{% url 'products:add_to_cart' product.id %}" class="cart-form">
+                    {% csrf_token %}
+                    <input type="hidden" name="variant_id" id="selected_variant_id" value="{% with first_variant=product.variants.first %}{{ first_variant.id }}{% endwith %}">
+                    <input type="hidden" name="next" value="{{ request.path }}">
+                    <button type="submit" class="btn btn-cart" id="add-to-cart-btn">
+                        🛒 Добавить в корзину
+                    </button>
+                </form>
+            {% else %}
+                <div class="product-price-section">
+                    <span class="price-label">Цена:</span>
+                    <span class="product-price">{{ product.price|floatformat:2 }}</span>
+                    <span class="price-currency">₽</span>
+                </div>
+                
+                <div class="stock-status">
+                    В наличии: {{ product.amount }} шт.
+                </div>
+                
+                <form method="post" action="{% url 'products:add_to_cart' product.id %}" class="cart-form">
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="{{ request.path }}">
+                    <button type="submit" class="btn btn-cart">🛒 Добавить в корзину</button>
+                </form>
+            {% endif %}
+            
+            <div class="product-detail-description">
+                <strong>Описание:</strong>
+                <p>{{ product.description|linebreaks|default:"Описание отсутствует" }}</p>
+            </div>
+            
+            <a href="{% url 'products:product_list' %}" class="back-link">← Назад к списку товаров</a>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const variantBtns = document.querySelectorAll('.variant-btn');
+        const variantPriceSpan = document.getElementById('variant-price');
+        const variantAmountSpan = document.getElementById('variant-amount');
+        const variantIdInput = document.getElementById('selected_variant_id');
+        const mainImage = document.getElementById('main-product-image');
+        const addToCartBtn = document.getElementById('add-to-cart-btn');
+        
+        if (variantBtns.length > 0) {
+            variantBtns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    // Убираем активный класс у всех кнопок в этой группе
+                    const parentGroup = this.closest('.variant-buttons');
+                    parentGroup.querySelectorAll('.variant-btn').forEach(b => {
+                        b.classList.remove('active');
+                    });
+                    
+                    // Добавляем активный класс текущей кнопке
+                    this.classList.add('active');
+                    
+                    // Получаем данные вариации
+                    const variantId = this.dataset.variantId;
+                    const variantPrice = this.dataset.variantPrice;
+                    const variantAmount = this.dataset.variantAmount;
+                    const variantName = this.dataset.variantName;
+                    const variantImage = this.dataset.variantImage;
+                    
+                    // Обновляем цену
+                    if (variantPriceSpan) {
+                        variantPriceSpan.textContent = variantPrice;
+                    }
+                    
+                    // Обновляем наличие
+                    if (variantAmountSpan) {
+                        variantAmountSpan.textContent = variantAmount;
+                    }
+                    
+                    // Обновляем изображение
+                    if (variantImage && variantImage !== 'None' && variantImage !== '' && mainImage) {
+                        if (mainImage.tagName === 'IMG') {
+                            mainImage.src = variantImage;
+                        }
+                    }
+                    
+                    // Обновляем hidden input
+                    if (variantIdInput) {
+                        variantIdInput.value = variantId;
+                    }
+                    
+                    // Меняем текст кнопки
+                    if (addToCartBtn && variantName) {
+                        addToCartBtn.textContent = '🛒 Добавить ' + variantName + ' в корзину';
+                    }
+                });
+            });
+        }
+    });
+</script>
+{% endblock %}

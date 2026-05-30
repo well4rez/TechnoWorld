@@ -1,0 +1,180 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}TechnoWorld{% endblock %}</title>
+
+    <link rel="stylesheet" href="{% static 'products/css/main.css' %}">
+    <link rel="stylesheet" href="{% static 'products/css/components.css' %}"> 
+    <link rel="stylesheet" href="{% static 'products/css/responsive.css' %}">
+</head>
+<body>
+    <!-- Контейнер для toast-уведомлений -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <div class="header">
+        <div class="header-top">
+            <h1><a href="/">TechnoWorld</a></h1>
+            
+            <div class="header-nav">
+                <a href="{% url 'products:categories_list' %}" class="btn">📂 Каталог</a>
+                
+                <form method="get" action="{% url 'products:product_list' %}" class="search-form">
+                    <input type="text" name="q" placeholder="Поиск по названию" value="{{ request.GET.q }}">
+                    <button type="submit">Найти</button>
+                    <a href="{% url 'products:product_list' %}" class="btn btn-outline">Сбросить</a>
+                </form>
+            </div>
+            
+            <div class="header-actions">
+
+                {% if user.is_superuser or user.role == 'admin' %}
+                <div class="dropdown-container">
+                    <button onclick="toggleDropdown('adminDropdown')" class="btn-admin">Админ панель ▼</button>
+                    <div id="adminDropdown" class="dropdown-menu">
+                        <a href="{% url 'products:pending_requests' %}">Заявки на модерацию</a>
+                        <a href="{% url 'products:user_list' %}">Пользователи</a>
+                        <a href="/admin/">Unfold панель</a>
+                    </div>
+                </div>
+                {% endif %}
+                
+                {% if user.role == 'manager' %}
+                    <div class="dropdown-container">
+                        <button onclick="toggleDropdown('managerDropdown')" class="btn">Заявки ▼</button>
+                        <div id="managerDropdown" class="dropdown-menu">
+                            <a href="{% url 'products:create_request' 'add_product' %}">Добавить товар</a>
+                            <a href="{% url 'products:create_request' 'edit_product' %}">Редактировать товар</a>
+                            <a href="{% url 'products:message_to_admin' %}">Сообщение админу</a>
+                            <a href="{% url 'products:my_requests' %}">Мои заявки</a>
+                        </div>
+                    </div>
+                {% endif %}
+                
+                {% if user.is_authenticated %}
+                <div class="dropdown-container">
+                    <a href="{% url 'products:cart_view' %}" class="cart-link">
+                        🛒 Корзина {% if cart_items_count %}<span class="cart-count">({{ cart_items_count }})</span>{% endif %}
+                    </a>
+                    <button onclick="toggleDropdown('userDropdown')" class="btn-user">{{ user.username }} ▼</button>
+                    <div id="userDropdown" class="dropdown-menu">
+                        <a href="{% url 'products:profile' %}">Профиль</a>
+                        {% if user.role == 'manager' or user.role == 'admin' %}
+                        <a href="{% url 'products:my_requests' %}">Мои заявки</a>
+                        {% endif %}
+                        <hr>
+                        <form method="post" action="{% url 'products:logout' %}">
+                            {% csrf_token %}
+                            <button type="submit" class="dropdown-logout">Выйти</button>
+                        </form>
+                    </div>
+                </div>
+                {% else %}
+                    <a href="{% url 'products:login' %}" class="btn">Войти</a>
+                    <a href="{% url 'products:register' %}" class="btn">Регистрация</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    {% if messages %}
+        <div style="display: none;">
+            {% for message in messages %}
+                <div class="django-message" data-type="{% if message.tags == 'error' %}error{% elif message.tags == 'success' %}success{% elif message.tags == 'info' %}info{% else %}warning{% endif %}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <div class="content">
+        {% block content %}
+        {% endblock %}
+    </div>
+
+    <div class="footer">
+        <div class="footer-content">
+            <div class="footer-section">
+                <h3>О нас</h3>
+                <p>TechnoWorld - ваш надежный магазин электроники. Только качественные товары по лучшим ценам.</p>
+            </div>
+            
+            <div class="footer-section">
+                <h3>Контакты</h3>
+                <p>📞+7 (999) 123-45-67</p>
+                <p>✉ info@technoworld.ru</p>
+                <p>г. Норвинск, ул. Тестовая, д. 123</p>
+            </div>
+            
+            <div class="footer-section">
+                <h3>Информация</h3>
+                <p><a href="#">О магазине</a></p>
+                <p><a href="#">Доставка и оплата</a></p>
+                <p><a href="#">Гарантия</a></p>
+                <p><a href="#">Возврат товара</a></p>
+            </div>
+            
+            <div class="footer-section">
+                <h3>Социальные сети</h3>
+                <p><a href="#">📘 Telegram</a></p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>TechnoWorld</p>
+        </div>
+    </div>
+
+    <script>
+        function toggleDropdown(dropdownId) {
+            var dropdown = document.getElementById(dropdownId);
+            var isOpen = dropdown.classList.contains('show');
+            
+            // Закрываем все меню
+            var allMenus = document.querySelectorAll('.dropdown-menu');
+            allMenus.forEach(function(menu) {
+                menu.classList.remove('show');
+            });
+            
+            if (!isOpen) {
+                dropdown.classList.add('show');
+                event.stopPropagation();
+            }
+        }
+        
+        document.addEventListener('click', function(event) {
+            var isClickInside = event.target.closest('.dropdown-container');
+            if (!isClickInside) {
+                var allMenus = document.querySelectorAll('.dropdown-menu');
+                allMenus.forEach(function(menu) {
+                    menu.classList.remove('show');
+                });
+            }
+        });
+
+        function showToast(message, type) {
+            var container = document.getElementById('toast-container');
+            if (!container) return;
+            
+            var toast = document.createElement('div');
+            toast.className = 'toast toast-' + type;
+            toast.textContent = message;
+            container.appendChild(toast);
+            
+            setTimeout(function() {
+                toast.classList.add('fade-out');
+                setTimeout(function() { toast.remove(); }, 200);
+            }, 5000);
+        }
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            var messages = document.querySelectorAll('.django-message');
+            messages.forEach(function(msg) {
+                showToast(msg.textContent, msg.dataset.type);
+                msg.remove();
+            });
+        });
+    </script>
+</body>
+</html>

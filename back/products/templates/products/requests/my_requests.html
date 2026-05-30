@@ -1,0 +1,235 @@
+{% extends 'products/base.html' %}
+
+{% block title %}Мои заявки - TechnoWorld{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">Мои заявки</h1>
+    <div class="buttons-group">
+        <a href="{% url 'products:create_request' 'add_product' %}" class="btn-add-request">
+            Заявка на добавление
+        </a>
+        <a href="{% url 'products:create_request' 'edit_product' %}" class="btn-edit-request">
+            Заявка на редактирование
+        </a>
+    </div>
+</div>
+
+{% if requests %}
+    <table class="requests-table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Тип</th>
+                <th>Статус</th>
+                <th>Дата</th>
+                <th>Ответ администратора</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for req in requests %}
+            <tr>
+                <td>#{{ req.id }}</td>
+                <td>{{ req.get_type_display }}</td>
+                <td>
+                    {% if req.status == 'pending' %}
+                        <span class="status-badge status-pending">На рассмотрении...</span>
+                    {% elif req.status == 'approved' %}
+                        <span class="status-badge status-approved">Одобрено</span>
+                    {% elif req.status == 'rejected' %}
+                        <span class="status-badge status-rejected">Отклонено</span>
+                    {% endif %}
+                </td>
+                <td>{{ req.created_at|date:"d.m.Y H:i" }}</td>
+                <td class="admin-response">{{ req.admin_response|default:"—" }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% else %}
+    <div class="empty-requests">
+        <h3>У вас пока нет заявок</h3>
+        <p>Создайте заявку на добавление или редактирование товара</p>
+        <a href="{% url 'products:create_request' 'add_product' %}" class="btn-create">Создать заявку</a>
+    </div>
+
+<style>.requests-page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.requests-page-title {
+    font-size: 28px;
+    color: #333;
+    margin: 0;
+}
+
+/* Группа кнопок */
+.requests-buttons-group {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+/* Кнопки */
+.btn-add-request {
+    background-color: #28a745;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-size: 14px;
+    transition: all 0.3s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.btn-add-request:hover {
+    background-color: #218838;
+    transform: translateY(-2px);
+    color: white;
+    text-decoration: none;
+}
+
+.btn-edit-request {
+    background-color: #007bff;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-size: 14px;
+    transition: all 0.3s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.btn-edit-request:hover {
+    background-color: #0056b3;
+    transform: translateY(-2px);
+    color: white;
+    text-decoration: none;
+}
+
+/* Пустое состояние */
+.empty-requests {
+    text-align: center;
+    padding: 60px 20px;
+    background: #f8f9fa;
+    border-radius: 16px;
+    margin-top: 20px;
+}
+
+.empty-requests h3 {
+    font-size: 20px;
+    color: #333;
+    margin-bottom: 8px;
+}
+
+.empty-requests p {
+    color: #666;
+    margin-bottom: 20px;
+}
+
+.empty-requests .btn-create {
+    background-color: #28a745;
+    color: white;
+    padding: 10px 24px;
+    border-radius: 8px;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.empty-requests .btn-create:hover {
+    background-color: #218838;
+}
+
+/* Таблица заявок */
+.requests-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    margin-top: 20px;
+}
+
+.requests-table th {
+    background-color: #007bff;
+    color: white;
+    padding: 14px;
+    text-align: left;
+    font-weight: 600;
+}
+
+.requests-table td {
+    padding: 12px 14px;
+    border-bottom: 1px solid #eee;
+}
+
+.requests-table tr:hover {
+    background-color: #f8f9fa;
+}
+
+/* Бейджи статусов */
+.status-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.status-pending {
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+.status-approved {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.status-rejected {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+.admin-response {
+    max-width: 250px;
+    font-size: 13px;
+    color: #666;
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+    .requests-page-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .requests-buttons-group {
+        justify-content: stretch;
+    }
+    
+    .btn-add-request, .btn-edit-request {
+        text-align: center;
+        flex: 1;
+    }
+    
+    .requests-table {
+        font-size: 13px;
+    }
+    
+    .requests-table th, .requests-table td {
+        padding: 8px;
+    }
+}</style>
+{% endif %}
+{% endblock %}
