@@ -1,0 +1,1 @@
+.venv\Scripts\python.exe manage.py runserver - запуск через 5 . (без докера)
