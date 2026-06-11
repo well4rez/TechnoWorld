@@ -3,7 +3,7 @@
 {% block title %}Корзина - TechnoWorld{% endblock %}
 
 {% block content %}
-<h1>🛒 Корзина</h1>
+<h1> Корзина</h1>
 
 {% if items %}
     <table class="cart-table">
@@ -50,7 +50,7 @@
     </div>
 {% else %}
     <div class="empty-cart">
-        <div class="empty-cart-icon">🛒</div>
+        <div class="empty-cart-icon"></div>
         <h3>Корзина пуста</h3>
         <p>Добавьте товары из каталога</p>
         <a href="{% url 'products:product_list' %}" class="btn">Перейти в каталог</a>

@@ -240,6 +240,7 @@ class User(AbstractUser):
     class Meta:
         db_table = 'products_user'
         verbose_name = 'Пользователь'
+        verbose_name_plural = 'Пользователи'
 
     def is_manager(self):
         return self.role == self.Role.MANAGER or self.is_superuser
@@ -276,6 +277,8 @@ class Order(models.Model):
         return f"Заказ #{self.id}"
     
     class Meta:
+        verbose_name = "Заказ"
+        verbose_name_plural = "Заказы"
         ordering = ['-created_at']
 
 class OrderItem(models.Model):
@@ -291,6 +294,10 @@ class OrderItem(models.Model):
     def __str__(self):
         return f"{self.product_name} x {self.quantity}"
     # ###
+    class Meta:
+        verbose_name = "Заказанный товар"
+        verbose_name_plural = "Заказанные товары"
+
 class Cart(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, null=True, blank=True, related_name='cart')
     session_key = models.CharField(max_length=40, null=True, blank=True)
@@ -307,6 +314,10 @@ class Cart(models.Model):
         if self.user:
             return f"Корзина {self.user.username}"
         return f"Корзина гостя {self.session_key}"
+    
+    class Meta:
+        verbose_name = "Корзина"
+        verbose_name_plural = "Корзины"
 
 class CartItem(models.Model):
     cart = models.ForeignKey(Cart, on_delete=models.CASCADE, related_name='items')
@@ -323,6 +334,9 @@ class CartItem(models.Model):
         if self.variant:
             return f"{self.product.name} ({self.variant.name})"
         return self.product.name
+    class Meta:
+        verbose_name = "Запись корзины"
+        verbose_name_plural = "Записи корзины"
     
 
     

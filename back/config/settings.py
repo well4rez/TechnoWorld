@@ -165,7 +165,7 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 UNFOLD = {
     "SITE_TITLE": "TechnoWorld Админка",
     "SITE_HEADER": "TechnoWorld",
-    "SITE_SYMBOL": "🛒",
+    "SITE_SYMBOL": "",
     "THEME": "light",
     "COLORS": {
         "primary": {

@@ -10,7 +10,7 @@
                 <img src="{{ product.image.url }}" alt="{{ product.name }}" id="main-product-image" class="product-main-image">
             {% else %}
                 <div class="product-detail-placeholder" id="main-product-image">
-                    📷 Нет фото
+                     Нет фото
                 </div>
             {% endif %}
         </div>
@@ -87,7 +87,7 @@
                     <input type="hidden" name="variant_id" id="selected_variant_id" value="{% with first_variant=product.variants.first %}{{ first_variant.id }}{% endwith %}">
                     <input type="hidden" name="next" value="{{ request.path }}">
                     <button type="submit" class="btn btn-cart" id="add-to-cart-btn">
-                        🛒 Добавить в корзину
+                         Добавить в корзину
                     </button>
                 </form>
             {% else %}
@@ -104,7 +104,7 @@
                 <form method="post" action="{% url 'products:add_to_cart' product.id %}" class="cart-form">
                     {% csrf_token %}
                     <input type="hidden" name="next" value="{{ request.path }}">
-                    <button type="submit" class="btn btn-cart">🛒 Добавить в корзину</button>
+                    <button type="submit" class="btn btn-cart"> Добавить в корзину</button>
                 </form>
             {% endif %}
             
@@ -170,7 +170,7 @@
                     
                     // Меняем текст кнопки
                     if (addToCartBtn && variantName) {
-                        addToCartBtn.textContent = '🛒 Добавить ' + variantName + ' в корзину';
+                        addToCartBtn.textContent = ' Добавить ' + variantName + ' в корзину';
                     }
                 });
             });

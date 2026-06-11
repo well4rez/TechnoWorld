@@ -37,7 +37,7 @@
                 <form method="post" action="{% url 'products:add_to_cart' product.id %}">
                     {% csrf_token %}
                     <input type="hidden" name="next" value="{{ request.path }}">
-                    <button type="submit" class="btn btn-cart">🛒 В корзину</button>
+                    <button type="submit" class="btn btn-cart"> В корзину</button>
                 </form>
             </div>
             {% endfor %}

@@ -42,11 +42,11 @@
     <h3>{{ user.username }}</h3>
     
     <div class="profile-info">
-        <p><strong>👤 Имя пользователя:</strong> {{ user.username }}</p>
-        <p><strong>📧 Email:</strong> {{ user.email|default:"Не указан" }}</p>
-        <p><strong>📱 Телефон:</strong> {{ user.phone|default:"Не указан" }}</p>
-        <p><strong>⭐ Бонусные баллы:</strong> {{ user.bonus_points }}</p>
-        <p><strong>📅 Дата регистрации:</strong> {{ user.date_joined|date:"d.m.Y" }}</p>
+        <p><strong> Имя пользователя:</strong> {{ user.username }}</p>
+        <p><strong> Email:</strong> {{ user.email|default:"Не указан" }}</p>
+        <p><strong> Телефон:</strong> {{ user.phone|default:"Не указан" }}</p>
+        <p><strong> Бонусные баллы:</strong> {{ user.bonus_points }}</p>
+        <p><strong> Дата регистрации:</strong> {{ user.date_joined|date:"d.m.Y" }}</p>
         <p><strong>🕐 Последний вход:</strong> {{ user.last_login|date:"d.m.Y H:i"|default:"Никогда" }}</p>
     </div>
 </div>

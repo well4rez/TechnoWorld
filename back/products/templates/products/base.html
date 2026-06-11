@@ -19,7 +19,7 @@
             <h1><a href="/">TechnoWorld</a></h1>
             
             <div class="header-nav">
-                <a href="{% url 'products:categories_list' %}" class="btn">📂 Каталог</a>
+                <a href="{% url 'products:categories_list' %}" class="btn"> Каталог</a>
                 
                 <form method="get" action="{% url 'products:product_list' %}" class="search-form">
                     <input type="text" name="q" placeholder="Поиск по названию" value="{{ request.GET.q }}">
@@ -56,7 +56,7 @@
                 {% if user.is_authenticated %}
                 <div class="dropdown-container">
                     <a href="{% url 'products:cart_view' %}" class="cart-link">
-                        🛒 Корзина {% if cart_items_count %}<span class="cart-count">({{ cart_items_count }})</span>{% endif %}
+                         Корзина {% if cart_items_count %}<span class="cart-count">({{ cart_items_count }})</span>{% endif %}
                     </a>
                     <button onclick="toggleDropdown('userDropdown')" class="btn-user">{{ user.username }} ▼</button>
                     <div id="userDropdown" class="dropdown-menu">
