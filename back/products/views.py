@@ -75,7 +75,7 @@ def register(request):
     if request.method == 'POST':
         form = RegistrationForm(request.POST)
         if form.is_valid():
-            user = form.save()  # Теперь роль автоматически BUYER
+            user = form.save()
             login(request, user)
             messages.success(request, f'Добро пожаловать, {user.username}!')
             return redirect('products:product_list')
