@@ -173,7 +173,7 @@ UNFOLD = {
             "100": "243 232 255",
         },
     },
-    "SITE_URL": "http://localhost:3000",  # Ссылка на фронтенд
+    "SITE_URL": "http://localhost:8000",  
 }
 
 REST_FRAMEWORK = {
@@ -198,8 +198,8 @@ SIMPLE_JWT = {
 
 # REACT_THING
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",  
-    "http://127.0.0.1:3000",
+    "http://localhost:8000",  
+    "http://127.0.0.1:8000",
 ]
 
 CORS_ALLOW_ALL_ORIGINS = True # Tests, BUT DEL WHEN IT COMPELETED

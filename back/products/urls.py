@@ -5,10 +5,10 @@ from .api.views import ProductListAPI, ProductDetailAPI, CategoryListAPI, search
 app_name = 'products'
 
 urlpatterns = [
-    path('products/', ProductListAPI.as_view(), name='api_products'),
-    path('products/<slug:slug>/', ProductDetailAPI.as_view(), name='api_product_detail'),
-    path('categories/', CategoryListAPI.as_view(), name='api_categories'),
-    path('search/', search_products, name='api_search'),
+    path('api/products/', ProductListAPI.as_view(), name='api_products'),
+    path('api/products/<slug:slug>/', ProductDetailAPI.as_view(), name='api_product_detail'),
+    path('api/categories/', CategoryListAPI.as_view(), name='api_categories'),
+    path('api/search/', search_products, name='api_search'),
 
 
     path('', product_list, name='product_list'),
