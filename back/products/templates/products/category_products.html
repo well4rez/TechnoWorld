@@ -5,65 +5,78 @@
 {% block content %}
 <div class="category-page">
     <!-- Шапка категории -->
-    <div class="category-header">
+    <!-- Шапка категории (уплотнённая) -->
+<div class="category-header">
+    <div class="category-header-left">
         {% if current_category.image %}
-            <img src="{{ current_category.image.url }}" alt="{{ current_category.name }}" class="category-header-image">
         {% else %}
-            <div class="category-header-icon">📁</div>
+            <div cl="category-header-icon">📁</div>
         {% endif %}
-        
-        <h1 class="category-title">{{ current_category.name }}</h1>
-        
-        <div class="category-count">
-            📦 {{ products|length }} товаров
+        <div class="category-header-info">
+            <h1 class="category-title">{{ current_category.name }}</h1>
+            <div class="category-count">{{ products|length }} товаров</div>
         </div>
     </div>
+</div>
 
-    <!-- Список товаров -->
     {% if products %}
-        <div class="product-grid">
-            {% for product in products %}
-                <div class="product-card">
-                    <a href="{% url 'products:product_detail' product.slug %}">
-                        {% if product.image %}
-                            <img src="{{ product.image.url }}" alt="{{ product.name }}" class="product-card-image">
-                        {% else %}
-                            <div class="product-card-placeholder">
-                                 Нет фото
-                            </div>
-                        {% endif %}
-                    </a>
-                    
-                    <div class="product-card-brand">
-                        {% if product.brand %}
-                            {% if product.brand.image %}
-                                <img src="{{ product.brand.image.url }}" alt="{{ product.brand.name }}" class="brand-logo-small">
-                            {% endif %}
-                            <span>{{ product.brand.name }}</span>
-                        {% endif %}
-                    </div>
-                    
-                    <a href="{% url 'products:product_detail' product.slug %}" class="product-card-title">
-                        {{ product.name }}
-                    </a>
-                    
-                    <div class="product-card-price">
-                        {{ product.price }} ₽
-                    </div>
-                    
-                    <div class="product-card-stock">
-                         В наличии: {{ product.amount }} шт.
-                    </div>
+    <div class="product-grid">
+        {% for product in products %}
+        <div class="product-card">
+            <a href="{% url 'products:product_detail' product.slug %}" class="product-image-link">
+                {% if product.image %}
+                <img src="{{ product.image.url }}" alt="{{ product.name }}" class="product-image">
+                {% else %}
+                <div class="product-image-placeholder">
+                    <span>📷</span>
                 </div>
-            {% endfor %}
+                {% endif %}
+            </a>
+            
+            <div class="product-brand">
+                {% if product.brand %}
+                <span class="brand-name">{{ product.brand.name }}</span>
+                {% endif %}
+                <span class="product-category">{{ product.category.name }}</span>
+            </div>
+            
+            <a href="{% url 'products:product_detail' product.slug %}" class="product-title">
+                {{ product.name }}
+            </a>
+            
+            <div class="product-price-wrapper">
+                {% if product.has_variants %}
+                <span class="price-from">от</span>
+                {% endif %}
+                <span class="product-price">{{ product.price|floatformat:0 }}</span>
+                <span class="price-currency">₽</span>
+            </div>
+            
+            <div class="product-stock">
+                {% if product.amount > 0 %}
+                <span class="in-stock">✓ В наличии: {{ product.amount }} шт.</span>
+                {% else %}
+                <span class="out-of-stock">✗ Нет в наличии</span>
+                {% endif %}
+            </div>
+            
+            <form method="post" action="{% url 'products:add_to_cart' product.id %}" class="add-to-cart-form">
+                {% csrf_token %}
+                <button type="submit" class="btn-cart" {% if product.amount == 0 %}disabled{% endif %}>
+                    🛒 В корзину
+                </button>
+            </form>
         </div>
+        {% endfor %}
+    </div>
+    
     {% else %}
-        <div class="empty-category">
-            <div class="empty-category-icon">🔍</div>
-            <h3>В этой категории пока нет товаров</h3>
-            <p>Загляните позже — мы постоянно пополняем ассортимент!</p>
-            <a href="{% url 'products:product_list' %}" class="btn">На главную</a>
-        </div>
+    <div class="empty-category">
+        <div class="empty-category-icon">🔍</div>
+        <h3>В этой категории пока нет товаров</h3>
+        <p>Загляните позже — мы постоянно пополняем ассортимент!</p>
+        <a href="{% url 'products:product_list' %}" class="btn btn-primary">На главную</a>
+    </div>
     {% endif %}
 </div>
 {% endblock %}

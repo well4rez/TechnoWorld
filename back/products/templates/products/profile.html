@@ -3,53 +3,90 @@
 {% block title %}Личный кабинет - TechnoWorld{% endblock %}
 
 {% block content %}
-<style>
-    .profile-card {
-        background: #f9f9f9;
-        padding: 20px;
-        border-radius: 10px;
-        margin-bottom: 20px;
-    }
-    .profile-info {
-        margin-top: 15px;
-    }
-    .profile-info p {
-        margin: 10px 0;
-        font-size: 16px;
-    }
-    .profile-info strong {
-        display: inline-block;
-        width: 180px;
-    }
-    .btn-secondary {
-        background-color: #6c757d;
-        color: white;
-        border: none;
-        padding: 10px 20px;
-        border-radius: 5px;
-        cursor: pointer;
-        text-decoration: none;
-        display: inline-block;
-    }
-    .btn-secondary:hover {
-        background-color: #5a6268;
-    }
-</style>
+<div class="profile-container">
+    <div class="profile-header">
+        <h1>Личный кабинет</h1>
+        <button class="btn-edit" onclick="toggleEdit()">✏️ Редактировать</button>
+    </div>
 
-<h2>Личный кабинет</h2>
+    <div class="profile-card">
+        <div id="profile-info" class="profile-info">
+            <p><strong>Имя пользователя:</strong> <span>{{ user.username }}</span></p>
+            <p><strong>Email:</strong> <span>{{ user.email|default:"Не указан" }}</span></p>
+            <p><strong>Телефон:</strong> <span>{{ user.phone|default:"Не указан" }}</span></p>
+            <p><strong>Бонусные баллы:</strong> <span>{{ user.bonus_points|default:"0" }}</span></p>
+            <p><strong>Роль:</strong> <span>{{ user.get_role_display }}</span></p>
+            <p><strong>Дата регистрации:</strong> <span>{{ user.date_joined|date:"d.m.Y" }}</span></p>
+            <p><strong>Последний вход:</strong> <span>{{ user.last_login|date:"d.m.Y H:i"|default:"Никогда" }}</span></p>
+        </div>
+        
+        <div id="edit-form" style="display: none;">
+            <h3>Редактирование профиля</h3>
+            <form method="post" action="{% url 'products:profile_update' %}">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label>Email:</label>
+                    <input type="email" name="email" value="{{ user.email }}" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label>Телефон:</label>
+                    <input type="tel" name="phone" value="{{ user.phone }}" class="form-control">
+                </div>
+                <button type="submit" class="btn-save">Сохранить</button>
+                <button type="button" class="btn-cancel" onclick="toggleEdit()">Отмена</button>
+            </form>
+        </div>
+    </div>
 
-<div class="profile-card">
-    <h3>{{ user.username }}</h3>
-    
-    <div class="profile-info">
-        <p><strong> Имя пользователя:</strong> {{ user.username }}</p>
-        <p><strong> Email:</strong> {{ user.email|default:"Не указан" }}</p>
-        <p><strong> Телефон:</strong> {{ user.phone|default:"Не указан" }}</p>
-        <p><strong> Бонусные баллы:</strong> {{ user.bonus_points }}</p>
-        <p><strong> Дата регистрации:</strong> {{ user.date_joined|date:"d.m.Y" }}</p>
-        <p><strong>🕐 Последний вход:</strong> {{ user.last_login|date:"d.m.Y H:i"|default:"Никогда" }}</p>
+    <div class="orders-section">
+        <h2>📦 Мои заказы</h2>
+        {% if orders %}
+            <div class="orders-list">
+                {% for order in orders %}
+                <div class="order-card">
+                    <div class="order-header">
+                        <span class="order-id">Заказ #{{ order.id }}</span>
+                        <span class="order-date">{{ order.created_at|date:"d.m.Y H:i" }}</span>
+                        <span class="order-status">{{ order.get_status_display }}</span>
+                    </div>
+                    <div class="order-items">
+                        {% for item in order.items.all %}
+                        <div class="order-item">
+                            <span>{{ item.product_name }} x {{ item.quantity }}</span>
+                            <span>{{ item.price_at_moment }} ₽</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <div class="order-footer">
+                        <strong>Итого: {{ order.total_amount }} ₽</strong>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-orders">
+                <p>У вас пока нет заказов</p>
+                <a href="{% url 'products:product_list' %}" class="btn">Перейти в каталог</a>
+            </div>
+        {% endif %}
     </div>
 </div>
 
-<a href="{% url 'products:product_list' %}" class="btn-secondary">← На главную</a>
+<script>
+    function toggleEdit() {
+        var infoDiv = document.getElementById('profile-info');
+        var editDiv = document.getElementById('edit-form');
+        var editBtn = document.querySelector('.btn-edit');
+        
+        if (infoDiv.style.display === 'none') {
+            infoDiv.style.display = 'block';
+            editDiv.style.display = 'none';
+            editBtn.textContent = '✏️ Редактировать';
+        } else {
+            infoDiv.style.display = 'none';
+            editDiv.style.display = 'block';
+            editBtn.textContent = '✖️ Отмена';
+        }
+    }
+</script>
 {% endblock %}

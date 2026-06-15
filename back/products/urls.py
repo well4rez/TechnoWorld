@@ -20,6 +20,7 @@ urlpatterns = [
     path('login/', user_login, name='login'),
     path('logout/', user_logout, name='logout'),
     path('profile/', profile, name='profile'),
+    path('profile/update/', profile_update, name='profile_update'),
     
     # Админские URL
     path('admin/products/user/', user_list, name='user_list'),

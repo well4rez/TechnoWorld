@@ -509,3 +509,21 @@ def update_order_status(request, order_id):
             messages.success(request, f'Статус заказа #{order.id} обновлён')
     
     return redirect('products:all_orders')
+
+@login_required
+def profile_update(request):
+    if request.method == 'POST':
+        email = request.POST.get('email')
+        phone = request.POST.get('phone')
+        
+        user = request.user
+        if email:
+            user.email = email
+        if phone:
+            user.phone = phone
+        user.save()
+        
+        messages.success(request, 'Профиль успешно обновлён')
+        return redirect('products:profile')
+    
+    return redirect('products:profile')

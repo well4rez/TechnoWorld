@@ -15,4 +15,5 @@ urlpatterns = [
     # User endpoints
     path('user/', get_current_user, name='get_current_user'),
     path('register/', register_user, name='register_user'),
+    
 ]

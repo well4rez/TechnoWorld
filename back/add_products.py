@@ -339,6 +339,6 @@ products.append(Product(
 print(f"Создаю {len(products)} товаров...")
 for product in products:
     product.save()
-    print(f"✓ {product.name}")
+    print(f"{product.name}")
 
 print(f"\nГотово! Создано {len(products)} товаров.")
