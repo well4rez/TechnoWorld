@@ -3,49 +3,335 @@
 {% block title %}Модерация заявки #{{ request.id }} - TechnoWorld{% endblock %}
 
 {% block content %}
-<h2>📝 Модерация заявки #{{ request.id }}</h2>
+<div class="moderate-container">
+    <h1 class="moderate-title">
+        <span class="title-icon">📋</span> Модерация заявки #{{ request.id }}
+    </h1>
 
-<div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
-    <p><strong> Менеджер:</strong> {{ request.created_by.username }}</p>
-    <p><strong> Дата:</strong> {{ request.created_at|date:"d.m.Y H:i" }}</p>
-    <p><strong>📌 Тип:</strong> {{ request.get_type_display }}</p>
-    <p><strong>💬 Комментарий менеджера:</strong> {{ request.comment|default:"—" }}</p>
-    
-    <h3>Данные заявки:</h3>
-    <pre style="background: white; padding: 15px; border-radius: 5px; overflow-x: auto;">{{ request.data|pprint }}</pre>
+    <div class="moderate-card">
+        <div class="moderate-info">
+            <div class="info-row">
+                <div class="info-group">
+                    <span class="info-label">Менеджер</span>
+                    <span class="info-value">{{ request.created_by.username }}</span>
+                </div>
+                <div class="info-group">
+                    <span class="info-label">Дата</span>
+                    <span class="info-value">{{ request.created_at|date:"d.m.Y H:i" }}</span>
+                </div>
+                <div class="info-group">
+                    <span class="info-label">Тип</span>
+                    <span class="info-value-badge">{{ request.get_type_display }}</span>
+                </div>
+                <div class="info-group">
+                    <span class="info-label">Комментарий</span>
+                    <span class="info-value comment-text">{{ request.comment|default:"—" }}</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="moderate-data">
+            <div class="data-header">
+                <span class="data-icon">📦</span>
+                <span class="data-title">Содержимое данных</span>
+            </div>
+            <div class="data-json">
+                <pre>{% for key, value in request.data.items %}<span class="json-key">{{ key }}</span>: <span class="json-value">{{ value }}</span>
+{% endfor %}</pre>
+            </div>
+        </div>
+
+        <form method="post" class="moderate-form">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="admin_response">Вердикт или комментарий администратора</label>
+                <textarea 
+                    name="admin_response" 
+                    id="admin_response" 
+                    rows="4" 
+                    placeholder="Укажите причину отклонения или важный комментарий к одобрению..."
+                >{% if request.admin_response %}{{ request.admin_response }}{% endif %}</textarea>
+            </div>
+            
+            <div class="moderate-actions">
+                <a href="{% url 'products:pending_requests' %}" class="btn-back">Назад к списку</a>
+                <div class="decision-buttons">
+                    <button type="submit" name="action" value="reject" class="btn-reject">Отклонить</button>
+                    <button type="submit" name="action" value="approve" class="btn-approve">Одобрить заявку</button>
+                </div>
+            </div>
+        </form>
+    </div>
 </div>
 
-<form method="post">
-    {% csrf_token %}
-    
-    <div class="form-group">
-        <label>Ответ администратора:</label>
-        <textarea name="admin_response" rows="4" class="form-control">{% if request.admin_response %}{{ request.admin_response }}{% endif %}</textarea>
-    </div>
-    
-    <button type="submit" name="action" value="approve" style="background: #28a745; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;"> Одобрить</button>
-    <button type="submit" name="action" value="reject" style="background: #dc3545; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">❌ Отклонить</button>
-    <a href="{% url 'products:pending_requests' %}" style="background: #6c757d; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; text-decoration: none;">← Назад</a>
-</form>
+<style>
+/* ========== СОВРЕМЕННЫЙ ТЕМНЫЙ ИНТЕРФЕЙС ========== */
 
-{% if request.type == 'message' %}
-    <div style="background: #e3f2fd; padding: 20px; border-radius: 10px; margin: 15px 0;">
-        <h3>📨 Сообщение от менеджера</h3>
-        <p><strong> Отправитель:</strong> {{ request.created_by.username }}</p>
-        <p><strong>📌 Тема:</strong> {{ request.data.subject }}</p>
-        <p><strong>⚠️ Приоритет:</strong> 
-            {% if request.data.priority == 'high' %}🔴 Высокий
-            {% elif request.data.priority == 'medium' %}🟡 Средний
-            {% else %}🟢 Низкий{% endif %}
-        </p>
-        <p><strong>💬 Текст сообщения:</strong></p>
-        <div style="background: white; padding: 15px; border-radius: 8px; margin-top: 10px;">
-            {{ request.data.message|linebreaks }}
-        </div>
-    </div>
-{% else %}
-    <div style="background: #f8f9fa; padding: 15px; border-radius: 5px; margin: 15px 0; overflow-x: auto;">
-        <pre>{{ request.data|pprint }}</pre>
-    </div>
-{% endif %}
+.moderate-container {
+    max-width: 900px;
+    margin: 40px auto;
+    padding: 0 20px;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    color: #f8fafc;
+}
+
+.moderate-title {
+    font-size: 26px;
+    font-weight: 700;
+    color: #f8fafc;
+    margin-bottom: 28px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.title-icon {
+    font-size: 24px;
+}
+
+/* Главная карточка */
+.moderate-card {
+    background: #1e293b; /* Slate 800 */
+    border-radius: 16px;
+    padding: 32px;
+    border: 1px solid #334155; /* Slate 700 */
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
+}
+
+/* Блок мета-информации */
+.moderate-info {
+    background: #0f172a; /* Slate 900 */
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 32px;
+    border: 1px solid #1e293b;
+}
+
+.info-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 24px;
+}
+
+.info-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.info-label {
+    font-size: 11px;
+    color: #94a3b8; /* Slate 400 */
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+}
+
+.info-value {
+    font-size: 15px;
+    color: #e2e8f0;
+    font-weight: 500;
+}
+
+.info-value-badge {
+    display: inline-block;
+    font-size: 13px;
+    font-weight: 600;
+    color: #38bdf8; /* Light blue text */
+    background: rgba(56, 189, 248, 0.1);
+    padding: 2px 10px;
+    border-radius: 6px;
+    width: fit-content;
+}
+
+.comment-text {
+    color: #cbd5e1;
+    font-style: italic;
+}
+
+/* Секция данных (JSON) */
+.moderate-data {
+    margin-bottom: 32px;
+}
+
+.data-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+.data-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: #94a3b8;
+}
+
+.data-json {
+    background: #090d16;
+    border-radius: 10px;
+    padding: 20px;
+    border-left: 4px solid #3b82f6; /* Акцентная синяя полоса слева */
+}
+
+.data-json pre {
+    font-family: 'Fira Code', 'Courier New', monospace;
+    font-size: 14px;
+    color: #cbd5e1;
+    margin: 0;
+    white-space: pre-wrap;
+    word-break: break-all;
+    line-height: 1.6;
+}
+
+.json-key {
+    color: #ff79c6; /* Розовый акцент для ключей, как в современных IDE */
+    font-weight: 500;
+}
+
+.json-value {
+    color: #50fa7b; /* Мягкий зеленый для значений */
+}
+
+/* Форма */
+.moderate-form .form-group {
+    margin-bottom: 28px;
+}
+
+.moderate-form label {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    color: #cbd5e1;
+    margin-bottom: 10px;
+}
+
+.moderate-form textarea {
+    width: 100%;
+    padding: 16px;
+    background: #0f172a;
+    border: 1px solid #475569;
+    border-radius: 10px;
+    color: #f8fafc;
+    font-size: 15px;
+    line-height: 1.5;
+    resize: vertical;
+    min-height: 110px;
+    transition: all 0.2s ease;
+    font-family: inherit;
+}
+
+.moderate-form textarea:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+}
+
+.moderate-form textarea::placeholder {
+    color: #64748b;
+}
+
+/* Кнопки и экшены */
+.moderate-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    border-top: 1px solid #334155;
+    padding-top: 24px;
+}
+
+.decision-buttons {
+    display: flex;
+    gap: 14px;
+    flex: 1;
+    justify-content: flex-end;
+}
+
+.btn-approve, .btn-reject, .btn-back {
+    padding: 12px 26px;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-approve {
+    background: #10b981; /* Спокойный изумрудный */
+    color: #ffffff;
+    border: none;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+}
+
+.btn-approve:hover {
+    background: #059669;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(16, 185, 129, 0.3);
+}
+
+.btn-reject {
+    background: #ef4444; /* Сдержанный красный */
+    color: #ffffff;
+    border: none;
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.15);
+}
+
+.btn-reject:hover {
+    background: #dc2626;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(239, 68, 68, 0.25);
+}
+
+.btn-back {
+    background: transparent;
+    color: #94a3b8;
+    border: 1px solid #475569;
+}
+
+.btn-back:hover {
+    background: #334155;
+    color: #f8fafc;
+    border-color: #64748b;
+}
+
+/* ========== АДАПТИВНОСТЬ ========== */
+
+@media (max-width: 800px) {
+    .info-row {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 20px;
+    }
+}
+
+@media (max-width: 640px) {
+    .moderate-card {
+        padding: 20px;
+    }
+
+    .info-row {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+
+    .moderate-actions {
+        flex-direction: column-reverse;
+        align-items: stretch;
+    }
+
+    .decision-buttons {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .btn-approve, .btn-reject, .btn-back {
+        width: 100%;
+        padding: 14px;
+    }
+}
+</style>
 {% endblock %}
