@@ -163,7 +163,6 @@ class Product(models.Model):
         return self.name
     
 class ProductVariant(models.Model):
-    """Вариация товара (цвет, размер, память и т.д.)"""
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='variants')
     name = models.CharField(max_length=100, verbose_name="Название вариации")  # например: "Красный", "128GB"
     sku = models.CharField(max_length=100, unique=True, blank=True, verbose_name="Артикул")
@@ -218,9 +217,6 @@ class User(AbstractUser):
         null=True
     )
 
-    bonus_points = models.PositiveIntegerField(
-        default=0
-    )
 
     role = models.CharField(
         max_length=20,
@@ -389,16 +385,23 @@ class Review(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='reviews')
     rating = models.PositiveSmallIntegerField(choices=[(i, i) for i in range(1, 6)], verbose_name="Оценка")
     text = models.TextField(verbose_name="Текст отзыва")
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата создания")
-    updated_at = models.DateTimeField(auto_now=True, verbose_name="Дата обновления")
-    is_approved = models.BooleanField(default=True, verbose_name="Одобрен")  # для модерации
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    is_approved = models.BooleanField(default=True)
+    admin_reply = models.TextField(blank=True, null=True, verbose_name="Ответ менеджера")
+    admin_replied_at = models.DateTimeField(blank=True, null=True, verbose_name="Дата ответа")
+    admin_replied_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='review_replies', verbose_name="Кто ответил")
     
     class Meta:
         db_table = 'products_review'
         verbose_name = 'Отзыв'
         verbose_name_plural = 'Отзывы'
         ordering = ['-created_at']
-        unique_together = ['product', 'user']  # один пользователь - один отзыв на товар
+        unique_together = ['product', 'user']
+    
+    def can_delete(self, user):
+        """Проверка, может ли пользователь удалить отзыв"""
+        return user.is_authenticated and (user.is_superuser or user.role == 'admin' or user.role == 'manager')
     
     def __str__(self):
         return f"{self.user.username} - {self.product.name} - {self.rating}⭐"

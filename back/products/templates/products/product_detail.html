@@ -1,12 +1,16 @@
 {% extends 'products/base.html' %}
+{% load price_filters %}
 
 {% block title %}{{ product.name }} - TechnoWorld{% endblock %}
 
 {% block content %}
 <div class="product-detail-page">
     <div class="product-detail">
+        <!-- ====== ИЗОБРАЖЕНИЕ ====== -->
         <div class="product-detail-image">
-            {% if product.image %}
+            {% if selected_variant and selected_variant.image %}
+                <img src="{{ selected_variant.image.url }}" alt="{{ product.name }}" id="main-product-image">
+            {% elif product.image %}
                 <img src="{{ product.image.url }}" alt="{{ product.name }}" id="main-product-image">
             {% else %}
                 <div class="product-detail-placeholder" id="main-product-image">
@@ -18,28 +22,7 @@
         <div class="product-detail-info">
             <h1 class="product-detail-title">{{ product.name }}</h1>
             
-            <div class="product-detail-meta">
-                <div class="meta-item">
-                    <span class="meta-label">Бренд:</span>
-                    {% if product.brand %}
-                        {% if product.brand.image %}
-                            <img src="{{ product.brand.image.url }}" alt="{{ product.brand.name }}" class="brand-logo">
-                        {% endif %}
-                        <span class="meta-value">{{ product.brand.name }}</span>
-                    {% else %}
-                        <span class="meta-value">Не указан</span>
-                    {% endif %}
-                </div>
-                <div class="meta-item">
-                    <span class="meta-label">Категория:</span>
-                    {% if product.category.image %}
-                        <img src="{{ product.category.image.url }}" alt="{{ product.category.name }}" class="brand-logo">
-                    {% endif %}
-                    <span class="meta-value">{{ product.category.name }}</span>
-                </div>
-            </div>
-            
-            <!-- Рейтинг -->
+            <!-- ====== РЕЙТИНГ ====== -->
             <div class="product-rating">
                 <div class="rating-stars">
                     {% for i in "12345"|make_list %}
@@ -55,21 +38,86 @@
                 </div>
             </div>
             
-            <div class="product-detail-price-block">
+            <!-- ====== ВАРИАЦИИ ====== -->
+            {% if product.has_variants and product.variants.exists %}
+            <div class="variants-section">
+                <div class="variants-title">Характеристики:</div>
+                <div class="variants-list">
+                    {% regroup product.variants.all by name as variant_groups %}
+                    {% for group in variant_groups %}
+                        <div class="variant-group">
+                            <div class="variant-buttons">
+                                {% for variant in group.list %}
+                                                <a href="?variant={{ variant.id }}"
+                                                    class="variant-btn {% if selected_variant.id == variant.id %}active{% endif %}"
+                                                    data-variant-id="{{ variant.id }}"
+                                                    data-price="{% if variant.get_price %}{{ variant.get_price|floatformat:2 }}{% else %}{{ product.price|floatformat:2 }}{% endif %}"
+                                                    data-price-formatted="{% if variant.get_price %}{{ variant.get_price|format_price }}{% else %}{{ product.price|format_price }}{% endif %}"
+                                                    data-amount="{{ variant.amount }}"
+                                                    data-image-url="{% if variant.image %}{{ variant.image.url }}{% elif product.image %}{{ product.image.url }}{% else %}{% endif %}">
+                                        {{ variant.name }}
+                                    </a>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <!-- ====== ЦЕНА ====== -->
+            <div class="product-price-section">
                 <span class="price-label">Цена:</span>
-                <span class="product-detail-price">{{ product.price|floatformat:2 }}</span>
+                <span class="product-price" id="variant-price">
+                    {% if selected_variant %}
+                        {{ selected_variant.get_price|format_price }}
+                    {% else %}
+                        {{ product.price|format_price }}
+                    {% endif %}
+                </span>
                 <span class="price-currency">₽</span>
             </div>
             
-            <div class="product-detail-stock">
-                ✅ В наличии: {{ product.amount }} шт.
+            <!-- ====== НАЛИЧИЕ ====== -->
+            <div class="stock-status" id="variant-stock">
+                В наличии: 
+                <span id="variant-amount">
+                    {% if selected_variant %}
+                        {{ selected_variant.amount }}
+                    {% else %}
+                        {{ product.amount }}
+                    {% endif %}
+                </span> шт.
             </div>
             
-            <form method="post" action="{% url 'products:add_to_cart' product.id %}" class="add-to-cart-form">
+            <!-- ====== КОРЗИНА ====== -->
+            <form method="post" action="{% url 'products:add_to_cart' product.id %}" class="cart-form">
+                {% csrf_token %}
+                {% if selected_variant %}
+                    <input type="hidden" name="variant_id" value="{{ selected_variant.id }}">
+                {% endif %}
+                <button type="submit" class="btn btn-cart">
+                    🛒 Добавить в корзину
+                </button>
+            </form>
+            {% else %}
+            <!-- Товар без вариаций -->
+            <div class="product-price-section">
+                <span class="price-label">Цена:</span>
+                <span class="product-price">{{ product.price|format_price }}</span>
+                <span class="price-currency">₽</span>
+            </div>
+            
+            <div class="stock-status">
+                В наличии: {{ product.amount }} шт.
+            </div>
+            
+            <form method="post" action="{% url 'products:add_to_cart' product.id %}" class="cart-form">
                 {% csrf_token %}
                 <button type="submit" class="btn btn-cart">🛒 Добавить в корзину</button>
             </form>
+            {% endif %}
             
+            <!-- ====== ОПИСАНИЕ ====== -->
             <div class="product-detail-description">
                 <strong>Описание:</strong>
                 <p>{{ product.description|linebreaks|default:"Описание отсутствует" }}</p>
@@ -79,7 +127,7 @@
         </div>
     </div>
 
-    <!-- ========== БЛОК ОТЗЫВОВ ========== -->
+    <!-- ====== ОТЗЫВЫ ====== -->
     <div class="reviews-section">
         <h2>💬 Отзывы</h2>
         
@@ -127,22 +175,54 @@
         {% if reviews %}
             <div class="reviews-list">
                 {% for review in reviews %}
-                    <div class="review-card">
-                        <div class="review-header">
-                            <span class="review-author">{{ review.user.username }}</span>
-                            <span class="review-rating">
-                                {% for i in "12345"|make_list %}
-                                    {% if forloop.counter <= review.rating %}
-                                        <span class="star filled">★</span>
-                                    {% else %}
-                                        <span class="star empty">★</span>
-                                    {% endif %}
-                                {% endfor %}
-                            </span>
-                            <span class="review-date">{{ review.created_at|date:"d.m.Y" }}</span>
-                        </div>
-                        <p class="review-text">{{ review.text }}</p>
+                <div class="review-card">
+                    <div class="review-header">
+                        <span class="review-author">{{ review.user.username }}</span>
+                        <span class="review-rating">
+                            {% for i in "12345"|make_list %}
+                                {% if forloop.counter <= review.rating %}
+                                    <span class="star filled">★</span>
+                                {% else %}
+                                    <span class="star empty">★</span>
+                                {% endif %}
+                            {% endfor %}
+                        </span>
+                        <span class="review-date">{{ review.created_at|date:"d.m.Y" }}</span>
+                        
+                        {% if user.is_authenticated and user.is_superuser or user.role == 'admin' or user.role == 'manager' %}
+                        <form method="post" action="{% url 'products:delete_review' review.id %}" style="display: inline; margin-left: auto;">
+                            {% csrf_token %}
+                            <button type="submit" class="review-delete-btn" onclick="return confirm('Удалить этот отзыв?')">Удалить</button>
+                        </form>
+                        {% endif %}
                     </div>
+                    <p class="review-text">{{ review.text }}</p>
+                    
+                    <!-- ====== ОТВЕТ МЕНЕДЖЕРА ====== -->
+                    {% if review.admin_reply %}
+                    <div class="review-reply">
+                        <div class="reply-header">
+                            <span class="reply-author">{{ review.admin_replied_by.username }} (менеджер)</span>
+                            <span class="reply-date">{{ review.admin_replied_at|date:"d.m.Y H:i" }}</span>
+                        </div>
+                        <p class="reply-text">{{ review.admin_reply }}</p>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Форма ответа для менеджера/админа -->
+                    {% if user.is_authenticated and user.is_superuser or user.role == 'admin' or user.role == 'manager' %}
+                    <div class="reply-form-container">
+                        <button class="reply-toggle-btn" onclick="toggleReplyForm('reply-form-{{ review.id }}')">Ответить</button>
+                        <form method="post" action="{% url 'products:reply_review' review.id %}" class="reply-form" id="reply-form-{{ review.id }}" style="display: none;">
+                            {% csrf_token %}
+                            <div class="form-group">
+                                <textarea name="admin_reply" class="form-control" rows="2" placeholder="Напишите ответ на отзыв..." required></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-review">Отправить ответ</button>
+                        </form>
+                    </div>
+                    {% endif %}
+                </div>
                 {% endfor %}
             </div>
         {% else %}
@@ -150,4 +230,105 @@
         {% endif %}
     </div>
 </div>
+
+<script>
+    // ====== ФУНКЦИЯ ДЛЯ ОТВЕТА НА ОТЗЫВ ======
+    function toggleReplyForm(formId) {
+        var form = document.getElementById(formId);
+        if (form) {
+            if (form.style.display === 'none' || form.style.display === '') {
+                form.style.display = 'block';
+            } else {
+                form.style.display = 'none';
+            }
+        }
+    }
+
+    // ====== ФУНКЦИЯ ДЛЯ ВАРИАЦИЙ ======
+    document.addEventListener('DOMContentLoaded', function() {
+        var variantBtns = document.querySelectorAll('.variant-btn');
+        var priceEl = document.getElementById('variant-price');
+        var amountEl = document.getElementById('variant-amount');
+        var mainImageEl = document.getElementById('main-product-image');
+        var cartForm = document.querySelector('.cart-form');
+
+        function replaceMainImage(url) {
+            if (!url) return;
+            var current = document.getElementById('main-product-image');
+            if (current && current.tagName && current.tagName.toLowerCase() === 'img') {
+                current.src = url;
+            } else if (current && current.parentNode) {
+                var img = document.createElement('img');
+                img.id = 'main-product-image';
+                img.alt = '{{ product.name }}';
+                img.src = url;
+                current.parentNode.replaceChild(img, current);
+            }
+        }
+
+        if (variantBtns.length) {
+            variantBtns.forEach(function(btn) {
+                btn.addEventListener('click', function(e) {
+                    e.preventDefault();
+
+                    variantBtns.forEach(function(b) { b.classList.remove('active'); });
+                    btn.classList.add('active');
+
+                    var imageUrl = btn.dataset.imageUrl || '';
+                    var price = btn.dataset.price || '';
+                    var priceFormatted = btn.dataset.priceFormatted || '';
+                    var amount = btn.dataset.amount || '';
+                    var variantId = btn.dataset.variantId || '';
+
+                    if (priceEl) {
+                        if (priceFormatted && priceFormatted !== '') {
+                            priceEl.textContent = priceFormatted;
+                        } else if (price !== '') {
+                            if (window.priceUtils && typeof window.priceUtils.formatNumberWithSpaces === 'function') {
+                                priceEl.textContent = window.priceUtils.formatNumberWithSpaces(price);
+                            } else {
+                                priceEl.textContent = price;
+                            }
+                        }
+                    }
+                    if (amountEl && amount !== '') amountEl.textContent = amount;
+                    if (imageUrl) replaceMainImage(imageUrl);
+
+                    if (cartForm) {
+                        var hidden = cartForm.querySelector('input[name="variant_id"]');
+                        if (!hidden) {
+                            hidden = document.createElement('input');
+                            hidden.type = 'hidden';
+                            hidden.name = 'variant_id';
+                            cartForm.appendChild(hidden);
+                        }
+                        hidden.value = variantId;
+                    }
+
+                    try {
+                        var url = new URL(window.location.href);
+                        if (variantId) url.searchParams.set('variant', variantId);
+                        else url.searchParams.delete('variant');
+                        history.replaceState({}, '', url);
+                    } catch (err) { /* ignore URL errors */ }
+                });
+            });
+        }
+
+        {% if selected_variant %}
+        (function() {
+            if (cartForm) {
+                var hv = cartForm.querySelector('input[name="variant_id"]');
+                if (!hv) {
+                    hv = document.createElement('input');
+                    hv.type = 'hidden';
+                    hv.name = 'variant_id';
+                    cartForm.appendChild(hv);
+                }
+                hv.value = '{{ selected_variant.id }}';
+            }
+        })();
+        {% endif %}
+    });
+</script>
 {% endblock %}

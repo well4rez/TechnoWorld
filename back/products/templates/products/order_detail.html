@@ -1,74 +1,118 @@
 {% extends 'products/base.html' %}
+{% load price_filters %}
 
 {% block title %}Заказ #{{ order.id }} - TechnoWorld{% endblock %}
 
 {% block content %}
-<div class="order-detail">
-    <h1>Заказ #{{ order.id }}</h1>
-    
-    <div class="order-status">
-        <strong>Статус:</strong>
-        <span class="badge 
-            {% if order.status == 'pending' %}badge-pending
-            {% elif order.status == 'paid' %}badge-approved
-            {% elif order.status == 'shipped' %}badge-approved
-            {% elif order.status == 'completed' %}badge-approved
-            {% elif order.status == 'cancelled' %}badge-rejected
-            {% endif %}">
+<div class="order-detail-page">
+    <div class="order-header">
+        <h1 class="order-title">📦 Заказ #{{ order.id }}</h1>
+        <div class="order-status-badge status-{{ order.status }}">
             {{ order.get_status_display }}
-        </span>
+        </div>
     </div>
-    
-    <div class="order-info">
-        <h3>Информация о заказе</h3>
-        <p><strong>Дата:</strong> {{ order.created_at|date:"d.m.Y H:i" }}</p>
-        <p><strong>Сумма:</strong> {{ order.total_amount }} ₽</p>
-    </div>
-    
-    <div class="delivery-info">
-        <h3>Данные доставки</h3>
-        <p><strong>Адрес:</strong> {{ order.address|default:"Не указан" }}</p>
-        <p><strong>Телефон:</strong> {{ order.phone|default:"Не указан" }}</p>
-        <p><strong>Комментарий:</strong> {{ order.comment|default:"—" }}</p>
-    </div>
-    
-    <div class="order-items">
-        <h3>Товары в заказе</h3>
-        <table class="data-table">
-            <thead>
-                <tr>
-                    <th>Товар</th>
-                    <th>Вариация</th>
-                    <th>Количество</th>
-                    <th>Цена</th>
-                    <th>Сумма</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for item in order.items.all %}
-                <tr>
-                    <td>{{ item.product_name }}</td>
-                    <td>{{ item.variant_name|default:"—" }}</td>
-                    <td>{{ item.quantity }}</td>
-                    <td>{{ item.price_at_moment }} ₽</td>
-                    <td>{{ item.get_total }} ₽</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-            <tfoot>
-                <tr>
-                    <td colspan="4"><strong>Итого:</strong></td>
-                    <td><strong>{{ order.total_amount }} ₽</strong></td>
-                </tr>
-            </tfoot>
-        </table>
-    </div>
-    
-    <div class="order-actions">
-        <a href="{% url 'products:product_list' %}" class="btn">Продолжить покупки</a>
-        {% if user.is_authenticated %}
-            <a href="{% url 'products:profile' %}" class="btn">Личный кабинет</a>
-        {% endif %}
+
+    <div class="order-grid">
+        <!-- Левая колонка: информация о заказе -->
+        <div class="order-info-column">
+            <div class="order-card">
+                <h3>📋 Информация о заказе</h3>
+                <div class="order-info-list">
+                    <div class="order-info-item">
+                        <span class="info-label">Дата заказа:</span>
+                        <span class="info-value">{{ order.created_at|date:"d.m.Y H:i" }}</span>
+                    </div>
+                    <div class="order-info-item">
+                        <span class="info-label">Сумма:</span>
+                        <span class="info-value order-total">{{ order.total_amount|format_price }} ₽</span>
+                    </div>
+                    <div class="order-info-item">
+                        <span class="info-label">Статус:</span>
+                        <span class="info-value status-{{ order.status }}">{{ order.get_status_display }}</span>
+                    </div>
+                    {% if order.user %}
+                    <div class="order-info-item">
+                        <span class="info-label">Покупатель:</span>
+                        <span class="info-value">{{ order.user.username }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="order-card">
+                <h3>📍 Данные доставки</h3>
+                <div class="order-info-list">
+                    <div class="order-info-item">
+                        <span class="info-label">Адрес:</span>
+                        <span class="info-value">{{ order.address|default:"Не указан" }}</span>
+                    </div>
+                    <div class="order-info-item">
+                        <span class="info-label">Телефон:</span>
+                        <span class="info-value">{{ order.phone|default:"Не указан" }}</span>
+                    </div>
+                    <div class="order-info-item">
+                        <span class="info-label">Комментарий:</span>
+                        <span class="info-value">{{ order.comment|default:"—" }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ====== САМОВЫВОЗ ====== -->
+            <div class="order-card pickup-card">
+                <div class="pickup-icon">🏪</div>
+                <h3>Вы можете забрать товар у нас в магазине</h3>
+                <div class="pickup-info">
+                    <p><strong>Адрес:</strong> г. Норвинск, ул. Тестовая, д. 123</p>
+                    <p><strong>Режим работы:</strong> Пн-Вс 10:00 — 21:00</p>
+                    <p><strong>Телефон:</strong> +7 (999) 123-45-67</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Правая колонка: товары в заказе -->
+        <div class="order-items-column">
+            <div class="order-card">
+                <h3>🛍️ Товары в заказе</h3>
+                <div class="order-items-list">
+                    {% for item in order.items.all %}
+                    <div class="order-item-card">
+                        <div class="order-item-info">
+                            <div class="order-item-name">{{ item.product_name }}</div>
+                            {% if item.variant_name %}
+                            <div class="order-item-variant">{{ item.variant_name }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="order-item-meta">
+                            <span class="order-item-quantity">× {{ item.quantity }}</span>
+                            <span class="order-item-price">{{ item.price_at_moment|format_price }} ₽</span>
+                            <span class="order-item-total">{{ item.get_total|format_price }} ₽</span>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <p class="no-items">В заказе нет товаров</p>
+                    {% endfor %}
+                </div>
+                <div class="order-total-row">
+                    <span class="order-total-label">Итого:</span>
+                    <span class="order-total-amount">{{ order.total_amount|format_price }} ₽</span>
+                </div>
+            </div>
+
+            <div class="order-actions">
+                <a href="{% url 'products:profile' %}" class="btn btn-secondary">← Назад к заказам</a>
+                <a href="{% url 'products:product_list' %}" class="btn btn-primary">Продолжить покупки →</a>
+                
+                <!-- Кнопка отмены заказа -->
+                {% if order.status != 'cancelled' and order.status != 'completed' %}
+                <form method="post" action="{% url 'products:cancel_order' order.id %}" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger" onclick="return confirm('Вы уверены, что хотите отменить заказ #{{ order.id }}?')">
+                        ❌ Отменить заказ
+                    </button>
+                </form>
+                {% endif %}
+            </div>
+        </div>
     </div>
 </div>
 

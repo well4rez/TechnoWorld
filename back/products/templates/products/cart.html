@@ -1,4 +1,5 @@
 {% extends 'products/base.html' %}
+{% load price_filters %}
 
 {% block title %}Корзина - TechnoWorld{% endblock %}
 
@@ -39,28 +40,52 @@
                             {% endif %}
                         </div>
                     </td>
-                    <td class="cart-price">{{ item.price_at_moment|floatformat:0 }} ₽</a>
+                    <td class="cart-price">{{ item.price_at_moment|format_price }} ₽</td>
                     <td>
-                        <form method="post" action="{% url 'products:update_cart_quantity' item.id %}" class="cart-quantity-form">
-                            {% csrf_token %}
-                            <div class="quantity-wrapper">
-                                <input type="number" name="quantity" value="{{ item.quantity }}" min="1" class="cart-quantity-input">
-                                <button type="submit" class="cart-update-btn">Обновить</button>
+                        <div class="cart-quantity-wrapper">
+                            <form method="post" action="{% url 'products:update_cart_quantity' item.id %}" class="cart-quantity-form">
+                                {% csrf_token %}
+                                <div class="quantity-wrapper">
+                                    <input type="number" 
+                                           name="quantity" 
+                                           value="{{ item.quantity }}" 
+                                           min="1" 
+                                           max="{% if item.variant %}{{ item.variant.amount }}{% else %}{{ item.product.amount }}{% endif %}" 
+                                           class="cart-quantity-input">
+                                    <button type="submit" class="cart-update-btn">Обновить</button>
+                                </div>
+                            </form>
+                            <div class="cart-stock-info">
+                                {% if item.variant %}
+                                    Доступно: {{ item.variant.amount }} шт.
+                                    {% if item.variant.amount == 0 %}
+                                        <span class="out">(нет в наличии)</span>
+                                    {% elif item.variant.amount <= 5 %}
+                                        <span class="limited">(заканчивается)</span>
+                                    {% endif %}
+                                {% else %}
+                                    Доступно: {{ item.product.amount }} шт.
+                                    {% if item.product.amount == 0 %}
+                                        <span class="out">(нет в наличии)</span>
+                                    {% elif item.product.amount <= 5 %}
+                                        <span class="limited">(заканчивается)</span>
+                                    {% endif %}
+                                {% endif %}
                             </div>
-                        </form>
-                    </a>
-                    <td class="cart-total">{{ item.get_total|floatformat:0 }} ₽</a>
+                        </div>
+                    </td>
+                    <td class="cart-total">{{ item.get_total|format_price }} ₽</td>
                     <td class="cart-remove-cell">
-                        <a href="{% url 'products:remove_from_cart' item.id %}" class="cart-remove-btn" onclick="return confirm('Удалить товар из корзины?')">🗑️</a>
-                    </a>
+                        <a href="{% url 'products:remove_from_cart' item.id %}" class="cart-remove-btn">Удалить</a>
+                    </td>
                 </tr>
                 {% endfor %}
             </tbody>
             <tfoot>
                 <tr>
-                    <td colspan="3" class="cart-total-label">Итого:</a>
-                    <td class="cart-grand-total">{{ total_price|floatformat:0 }} ₽</a>
-                    <td></a>
+                    <td colspan="3" class="cart-total-label"><strong>Итого:</strong></td>
+                    <td class="cart-grand-total"><strong>{{ total_price|format_price }} ₽</strong></td>
+                    <td></td>
                 </tr>
             </tfoot>
         </table>

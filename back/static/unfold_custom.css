@@ -1,0 +1,13 @@
+/* Фон как на сайте */
+html, body, .unfold-body {
+    background-color: #0a0a0a !important;
+}
+
+.unfold-main, .unfold-content {
+    background-color: #1a1a1a !important;
+}
+
+.unfold-header, .unfold-sidebar {
+    background-color: #0a0a0a !important;
+    border-color: #2a2a2a !important;
+}

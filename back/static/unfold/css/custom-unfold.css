@@ -1,0 +1,31 @@
+/* Custom Unfold overrides */
+:root {
+    --tw-bg-opacity: 1;
+}
+
+/* Force background for Unfold in dark mode */
+.dark, .dark body, .dark html { background-color: #0a0a0a !important; }
+
+/* Replace tailwind bg-gray-900 equivalent when used with opacity variables */
+.bg-gray-900 { background-color: rgb(10 10 10/var(--tw-bg-opacity)) !important; }
+
+/* Replace occurrences where rgb(17 24 39) used directly */
+*:where(.dark) { color-scheme: dark; }
+.simplebar-track .simplebar-scrollbar:before { background-color: #0a0a0acc !important; }
+
+/* Modal overlay */
+#modal-overlay, .backdrop-blur-sm { background-color: rgba(10,10,10,0.8) !important; }
+
+/* Make sure dropdowns and panels use the correct background */
+:where(.dark) .add-row,
+:where(.dark) .clockbox,
+:where(.dark) .selector select,
+:where(.dark) .select2-container.select2-container--admin-autocomplete .select2-selection--single,
+:where(.dark) .select2-container.select2-container--admin-autocomplete .select2-selection--multiple li.select2-selection__choice,
+:where(.dark) .select2-container.select2-container--open .select2-dropdown { background-color: #0a0a0a !important; }
+
+/* Tweak specific components if needed */
+:where(.dark) .ui-tabs.ui-widget .ui-tabs-nav li.ui-tabs-active a { background-color: #0a0a0a !important; }
+
+/* Fallback for any remaining exact rgb(17 24 39) usages */
+body, html { background-color: #0a0a0a !important; }

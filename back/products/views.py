@@ -3,6 +3,7 @@ from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib import messages
 from django.contrib.auth import get_user_model
+from django.utils import timezone
 from .models import Product, Category, User, Cart, CartItem, Request, Order, OrderItem, ProductVariant
 from .forms import RegistrationForm, LoginForm, AdminRegistrationForm, AddProductRequestForm, EditProductRequestForm
 from django.db import models
@@ -30,9 +31,58 @@ def product_list(request):
 def product_detail(request, slug):
     product = get_object_or_404(Product, slug=slug)
     categories = Category.objects.all()
+    reviews = product.reviews.filter(is_approved=True).order_by('-created_at')
+    
+    # Обновляем среднюю оценку
+    if reviews.exists():
+        avg = sum([r.rating for r in reviews]) / reviews.count()
+        product.aver_rating = round(avg, 2)
+        product.rating_count = reviews.count()
+        product.save(update_fields=['aver_rating', 'rating_count'])
+    
+    # Получаем выбранную вариацию
+    variant_id = request.GET.get('variant')
+    selected_variant = None
+
+    print("VARIANT_ID:", variant_id)
+    
+    if product.has_variants and product.variants.exists():
+        if variant_id:
+            try:
+                selected_variant = product.variants.get(id=variant_id, is_active=True)
+            except ProductVariant.DoesNotExist:
+                selected_variant = product.variants.filter(is_active=True).first()
+        else:
+            selected_variant = product.variants.filter(is_active=True).first()
+    
+    # Проверяем, может ли пользователь оставить отзыв
+    user_review = None
+    if request.user.is_authenticated:
+        user_review = Review.objects.filter(product=product, user=request.user).first()
+    
+    if request.method == 'POST' and request.user.is_authenticated:
+        if not user_review:
+            form = ReviewForm(request.POST)
+            if form.is_valid():
+                review = form.save(commit=False)
+                review.product = product
+                review.user = request.user
+                review.save()
+                messages.success(request, 'Ваш отзыв успешно добавлен!')
+                return redirect('products:product_detail', slug=product.slug)
+        else:
+            messages.warning(request, 'Вы уже оставили отзыв на этот товар')
+            return redirect('products:product_detail', slug=product.slug)
+    else:
+        form = ReviewForm()
+    
     return render(request, 'products/product_detail.html', {
         'product': product,
-        'categories': categories
+        'categories': categories,
+        'reviews': reviews,
+        'review_form': form,
+        'user_review': user_review,
+        'selected_variant': selected_variant,
     })
 
 def category_products(request, slug):
@@ -285,7 +335,12 @@ def user_logout(request):
 # ПРОФИЛЬ
 @login_required
 def profile(request):
-    return render(request, 'products/profile.html', {'user': request.user})
+    orders = Order.objects.filter(user=request.user).order_by('-created_at')
+    
+    return render(request, 'products/profile.html', {
+        'user': request.user,
+        'orders': orders,
+    })
 
 User = get_user_model()
 
@@ -305,49 +360,43 @@ def get_cart(request):
 def add_to_cart(request, product_id):
     product = get_object_or_404(Product, id=product_id)
     cart = get_cart(request)
-    
-    # Получаем выбранную вариацию из POST или из GET параметра
     variant_id = request.POST.get('variant_id') or request.GET.get('variant_id')
     variant = None
-    
+
     if variant_id:
         variant = get_object_or_404(ProductVariant, id=variant_id)
-    elif product.has_variants and product.variants.exists():
-        # Если вариация не выбрана, но они есть — берём первую активную
-        variant = product.variants.filter(is_active=True).first()
-    
-    # Цена и название для сообщения
-    if variant:
-        price = variant.get_price()
-        item_name = f"{product.name} ({variant.name})"
+        stock_available = variant.amount
     else:
-        price = product.price
-        item_name = product.name
+        stock_available = product.amount
     
-    # Ищем существующий товар в корзине (с такой же вариацией или без)
-    cart_item = CartItem.objects.filter(
-        cart=cart, 
-        product=product,
-        variant=variant
-    ).first()
+    if stock_available <= 0:
+        messages.error(request, 'Товар временно отсутствует на складе')
+        return redirect(request.META.get('HTTP_REFERER', '/'))
+    
+    cart_item = CartItem.objects.filter(cart=cart, product=product, variant=variant).first()
     
     if cart_item:
+        if cart_item.quantity + 1 > stock_available:
+            messages.warning(request, f'Доступно только {stock_available} шт.')
+            return redirect(request.META.get('HTTP_REFERER', '/'))
         cart_item.quantity += 1
         cart_item.save()
+        messages.success(request, f'Количество увеличено до {cart_item.quantity}')
     else:
+        if 1 > stock_available:
+            messages.warning(request, f'Доступно только {stock_available} шт.')
+            return redirect(request.META.get('HTTP_REFERER', '/'))
+        
         CartItem.objects.create(
             cart=cart,
             product=product,
             variant=variant,
             quantity=1,
-            price_at_moment=price
+            price_at_moment=variant.get_price() if variant else product.price
         )
+        messages.success(request, f'Товар добавлен в корзину')
     
-    messages.success(request, f'{item_name} добавлен в корзину')
-    
-    # Возвращаемся туда, откуда пришли
-    next_url = request.POST.get('next') or request.GET.get('next') or request.META.get('HTTP_REFERER', '/')
-    return redirect(next_url)
+    return redirect(request.META.get('HTTP_REFERER', '/'))
 
 
 def cart_view(request):
@@ -427,13 +476,27 @@ def update_cart_quantity(request, item_id):
     item = get_object_or_404(CartItem, id=item_id, cart=cart)
     
     if request.method == 'POST':
-        quantity = int(request.POST.get('quantity', 1))
-        if quantity > 0:
-            item.quantity = quantity
-            item.save()
+        try:
+            new_quantity = int(request.POST.get('quantity', 1))
+        except ValueError:
+            messages.error(request, 'Некорректное значение')
+            return redirect('products:cart_view')
+        
+        # Получаем остаток на складе
+        if item.variant:
+            stock_available = item.variant.amount
         else:
+            stock_available = item.product.amount
+        
+        if new_quantity <= 0:
             item.delete()
-        messages.success(request, 'Корзина обновлена')
+            messages.success(request, 'Товар удалён из корзины')
+        elif new_quantity > stock_available:
+            messages.warning(request, f'Доступно только {stock_available} шт.')
+        else:
+            item.quantity = new_quantity
+            item.save()
+            messages.success(request, 'Количество обновлено')
     
     return redirect('products:cart_view')
 
@@ -445,11 +508,33 @@ def checkout(request):
         messages.error(request, 'Корзина пуста')
         return redirect('products:cart_view')
     
+    last_orders = None
+    if request.user.is_authenticated:
+        last_orders = Order.objects.filter(
+            user=request.user
+        ).exclude(
+            address__isnull=True,
+            phone__isnull=True
+        ).order_by('-created_at')[:5]
+    
     if request.method == 'POST':
+        selected_item_ids = request.POST.getlist('selected_items')
+        
+        if not selected_item_ids:
+            messages.error(request, 'Выберите хотя бы один товар для заказа')
+            return redirect('products:checkout')
+        
         address = request.POST.get('address', '')
         phone = request.POST.get('phone', '')
         comment = request.POST.get('comment', '')
-        total_price = sum(item.get_total() for item in items)
+        
+        selected_items = items.filter(id__in=selected_item_ids)
+        
+        if not selected_items:
+            messages.error(request, 'Выбранные товары не найдены')
+            return redirect('products:checkout')
+        
+        total_price = sum(item.get_total() for item in selected_items)
         
         order = Order.objects.create(
             user=request.user if request.user.is_authenticated else None,
@@ -460,7 +545,7 @@ def checkout(request):
             comment=comment
         )
         
-        for item in items:
+        for item in selected_items:
             OrderItem.objects.create(
                 order=order,
                 product_name=item.product.name,
@@ -468,8 +553,7 @@ def checkout(request):
                 quantity=item.quantity,
                 price_at_moment=item.price_at_moment
             )
-        
-        items.delete()
+            item.delete()
         
         messages.success(request, f'Заказ #{order.id} успешно оформлен!')
         return redirect('products:order_detail', order_id=order.id)
@@ -478,6 +562,7 @@ def checkout(request):
     return render(request, 'products/checkout.html', {
         'items': items,
         'total_price': total_price,
+        'last_orders': last_orders,
     })
 
 def order_detail(request, order_id):
@@ -575,11 +660,56 @@ def product_detail(request, slug):
         'review_form': form,
         'user_review': user_review,
     })
+
+
 @login_required
-@user_passes_test(is_admin)
 def delete_review(request, review_id):
     review = get_object_or_404(Review, id=review_id)
+    if not request.user.is_superuser and request.user.role not in ['admin', 'manager']:
+        messages.error(request, 'У вас нет прав на удаление отзывов')
+        return redirect('products:product_detail', slug=review.product.slug)
+    
     product_slug = review.product.slug
     review.delete()
-    messages.success(request, 'Отзыв удалён')
+    messages.success(request, 'Отзыв успешно удалён')
     return redirect('products:product_detail', slug=product_slug)
+
+@login_required
+def reply_review(request, review_id):
+    review = get_object_or_404(Review, id=review_id)
+    
+    # Проверка прав: только админ или менеджер
+    if not request.user.is_superuser and request.user.role not in ['admin', 'manager']:
+        messages.error(request, 'У вас нет прав для ответа на отзывы')
+        return redirect('products:product_detail', slug=review.product.slug)
+    
+    if request.method == 'POST':
+        admin_reply = request.POST.get('admin_reply', '').strip()
+        if admin_reply:
+            review.admin_reply = admin_reply
+            review.admin_replied_at = timezone.now()
+            review.admin_replied_by = request.user
+            review.save()
+            messages.success(request, 'Ответ на отзыв успешно добавлен')
+        else:
+            messages.error(request, 'Ответ не может быть пустым')
+        return redirect('products:product_detail', slug=review.product.slug)
+    
+    return redirect('products:product_detail', slug=review.product.slug)
+
+@login_required
+def cancel_order(request, order_id):
+    order = get_object_or_404(Order, id=order_id, user=request.user)
+    
+    # Проверяем, можно ли отменить заказ (только если статус не завершён и не отменён)
+    if order.status in ['completed', 'cancelled']:
+        messages.warning(request, 'Этот заказ уже нельзя отменить')
+        return redirect('products:profile')
+    
+    order.status = 'cancelled'
+    order.save()
+    messages.success(request, f'Заказ #{order.id} успешно отменён')
+    
+    # Возвращаемся туда, откуда пришли
+    next_url = request.META.get('HTTP_REFERER', 'products:profile')
+    return redirect(next_url)

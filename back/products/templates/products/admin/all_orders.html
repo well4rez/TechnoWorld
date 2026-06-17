@@ -1,4 +1,5 @@
 {% extends 'products/base.html' %}
+{% load price_filters %}
 
 {% block title %}Все заказы - TechnoWorld{% endblock %}
 
@@ -21,7 +22,7 @@
         <tr>
             <td>#{{ order.id }}</td>
             <td>{{ order.user.username|default:"Гость" }}</td>
-            <td>{{ order.total_amount }} ₽</td>
+            <td>{{ order.total_amount|format_price }} ₽</td>
             <td>
                 <form method="post" action="{% url 'products:update_order_status' order.id %}">
                     {% csrf_token %}

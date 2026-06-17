@@ -1,51 +1,120 @@
 {% extends 'products/base.html' %}
+{% load price_filters %}
 
 {% block title %}Оформление заказа - TechnoWorld{% endblock %}
 
 {% block content %}
-<h1>📝 Оформление заказа</h1>
-
-<div style="display: flex; gap: 40px; flex-wrap: wrap;">
-    <div style="flex: 1;">
-        <h3>Ваши товары</h3>
-        <table class="cart-table">
-            <thead>
-                <tr><th>Товар</th><th>Кол-во</th><th>Сумма</th></tr>
-            </thead>
-            <tbody>
-                {% for item in items %}
-                <tr>
-                    <td>{{ item.get_display_name }}</td>
-                    <td>{{ item.quantity }}</td>
-                    <td>{{ item.get_total }} ₽</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-            <tfoot>
-                <tr><td colspan="2"><strong>Итого:</strong></td><td><strong>{{ total_price }} ₽</strong></td></tr>
-            </tfoot>
-        </table>
-    </div>
+<div class="checkout-container">
+    <h1>📝 Оформление заказа</h1>
     
-    <div style="flex: 1;">
-        <h3>Данные для доставки</h3>
-        <form method="post">
-            {% csrf_token %}
-            <div class="form-group">
-                <label>Адрес доставки</label>
-                <input type="text" name="address" class="form-control" required>
+    <form method="post" id="checkout-form">
+        {% csrf_token %}
+        
+        <div class="checkout-grid">
+            <div class="checkout-items">
+                <h2>Выберите товары для заказа</h2>
+                <div class="checkout-items-list">
+                    {% for item in items %}
+                    <div class="checkout-item">
+                        <div class="checkout-item-info">
+                            <input type="checkbox" 
+                                   name="selected_items" 
+                                   value="{{ item.id }}" 
+                                   id="item_{{ item.id }}" 
+                                   checked 
+                                   onchange="updateTotal()">
+                            <label for="item_{{ item.id }}" class="checkout-item-label">
+                                <span class="checkout-item-name">
+                                    {{ item.product.name }}
+                                    {% if item.variant %}
+                                    <span class="checkout-item-variant">({{ item.variant.name }})</span>
+                                    {% endif %}
+                                </span>
+                                <span class="checkout-item-quantity">× {{ item.quantity }}</span>
+                            </label>
+                        </div>
+                        <div class="checkout-item-price" id="price_{{ item.id }}">{{ item.get_total|format_price }} ₽</div>
+                    </div>
+                    {% endfor %}
+                </div>
+                <div class="checkout-total">
+                    <span>Итого:</span>
+                    <span class="checkout-total-price" id="checkout-total-price">{{ total_price|format_price }} ₽</span>
+                </div>
             </div>
-            <div class="form-group">
-                <label>Телефон</label>
-                <input type="tel" name="phone" class="form-control" required>
+            
+            <div class="checkout-form">
+                <h2>Данные для доставки</h2>
+                
+                {% if last_orders %}
+                <div class="quick-fill">
+                    <label>Использовать данные из прошлых заказов:</label>
+                    <select id="quick-fill-select" onchange="fillData(this.value)">
+                        <option value="">— Выберите заказ —</option>
+                        {% for order in last_orders %}
+                        <option value="{{ order.id }}" 
+                                data-address="{{ order.address }}"
+                                data-phone="{{ order.phone }}">
+                            Заказ #{{ order.id }} от {{ order.created_at|date:"d.m.Y" }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                {% endif %}
+                
+                <div class="form-group">
+                    <label>Адрес доставки *</label>
+                    <input type="text" name="address" id="id_address" class="form-control" required placeholder="г. Москва, ул. Примерная, д. 1, кв. 1">
+                </div>
+                <div class="form-group">
+                    <label>Телефон *</label>
+                    <input type="tel" name="phone" id="id_phone" class="form-control" required placeholder="+7 (999) 123-45-67">
+                </div>
+                <div class="form-group">
+                    <label>Комментарий к заказу</label>
+                    <textarea name="comment" class="form-control" rows="3" placeholder="Пожелания по доставке..."></textarea>
+                </div>
+                <div class="checkout-actions">
+                    <button type="button" onclick="history.back()" class="btn btn-back">← Назад</button>
+                    <button type="submit" class="btn btn-submit">Подтвердить заказ</button>
+                </div>
             </div>
-            <div class="form-group">
-                <label>Комментарий</label>
-                <textarea name="comment" class="form-control" rows="3"></textarea>
-            </div>
-            <button type="submit" class="btn btn-success">Подтвердить заказ</button>
-            <a href="{% url 'products:cart_view' %}" class="btn">Назад</a>
-        </form>
-    </div>
+        </div>
+    </form>
 </div>
+
+<script>
+    function fillData(orderId) {
+        if (!orderId) {
+            document.getElementById('id_address').value = '';
+            document.getElementById('id_phone').value = '';
+            return;
+        }
+        
+        var select = document.getElementById('quick-fill-select');
+        var selected = select.options[select.selectedIndex];
+        
+        var address = selected.getAttribute('data-address') || '';
+        var phone = selected.getAttribute('data-phone') || '';
+        
+        document.getElementById('id_address').value = address;
+        document.getElementById('id_phone').value = phone;
+    }
+    
+    function updateTotal() {
+        var checkboxes = document.querySelectorAll('input[name="selected_items"]:checked');
+        var total = 0;
+        
+        checkboxes.forEach(function(cb) {
+            var priceEl = document.getElementById('price_' + cb.value);
+            if (priceEl) {
+                var priceText = priceEl.textContent.replace('₽', '').trim();
+                total += (window.priceUtils && typeof window.priceUtils.parsePriceString === 'function') ? window.priceUtils.parsePriceString(priceText) : parseFloat(priceText.replace(/\s/g, '').replace(',', '.')) || 0;
+            }
+        });
+
+        var formatted = (window.priceUtils && typeof window.priceUtils.formatNumberWithSpaces === 'function') ? window.priceUtils.formatNumberWithSpaces(total) : total.toFixed(2);
+        document.getElementById('checkout-total-price').textContent = formatted + ' ₽';
+    }
+</script>
 {% endblock %}

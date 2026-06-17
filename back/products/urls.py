@@ -49,6 +49,8 @@ urlpatterns = [
 
     path('admin/orders/', all_orders, name='admin_orders'),
     path('admin/orders/update/<int:order_id>/', update_order_status, name='update_order_status'),
+    path('order/cancel/<int:order_id>/', cancel_order, name='cancel_order'),
     
     path('review/delete/<int:review_id>/', delete_review, name='delete_review'),
+    path('review/reply/<int:review_id>/', reply_review, name='reply_review'),
 ]

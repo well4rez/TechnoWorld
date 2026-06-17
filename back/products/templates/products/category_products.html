@@ -1,4 +1,5 @@
 {% extends 'products/base.html' %}
+{% load price_filters %}
 
 {% block title %}{{ current_category.name }} - TechnoWorld{% endblock %}
 
@@ -48,7 +49,7 @@
                 {% if product.has_variants %}
                 <span class="price-from">от</span>
                 {% endif %}
-                <span class="product-price">{{ product.price|floatformat:0 }}</span>
+                <span class="product-price">{{ product.price|format_price }}</span>
                 <span class="price-currency">₽</span>
             </div>
             
