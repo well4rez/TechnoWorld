@@ -50,5 +50,5 @@ urlpatterns = [
     path('admin/orders/', all_orders, name='admin_orders'),
     path('admin/orders/update/<int:order_id>/', update_order_status, name='update_order_status'),
     
-
+    path('review/delete/<int:review_id>/', delete_review, name='delete_review'),
 ]

@@ -167,15 +167,8 @@ UNFOLD = {
     "SITE_HEADER": "TechnoWorld",
     "SITE_SYMBOL": "",
     "THEME": "light",
-    "COLORS": {
-        "primary": {
-            "50": "250 245 255",
-            "100": "243 232 255",
-        },
-    },
-    "SITE_URL": "http://localhost:8000",  
+    "SITE_URL": "http://localhost:8000",
 }
-
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.AllowAny',  # Разрешить доступ всем (можно изменить на IsAuthenticated для ограничения доступа)

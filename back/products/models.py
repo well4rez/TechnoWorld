@@ -129,6 +129,9 @@ class Product(models.Model):
     updated_at = models.DateTimeField(
         auto_now=True
     )
+
+    aver_rating = models.DecimalField(max_digits=5, decimal_places=2, default=0.00, verbose_name="Средняя оценка")
+    rating_count = models.PositiveIntegerField(default=0, verbose_name="Количество оценок")
     has_variants = models.BooleanField(default=False, verbose_name="Есть вариации")
 
     class Meta:
@@ -380,3 +383,22 @@ class Request(models.Model):
         verbose_name = "Заявка"
         verbose_name_plural = "Заявки"
         ordering = ['-created_at']
+
+class Review(models.Model):
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='reviews')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='reviews')
+    rating = models.PositiveSmallIntegerField(choices=[(i, i) for i in range(1, 6)], verbose_name="Оценка")
+    text = models.TextField(verbose_name="Текст отзыва")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата создания")
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="Дата обновления")
+    is_approved = models.BooleanField(default=True, verbose_name="Одобрен")  # для модерации
+    
+    class Meta:
+        db_table = 'products_review'
+        verbose_name = 'Отзыв'
+        verbose_name_plural = 'Отзывы'
+        ordering = ['-created_at']
+        unique_together = ['product', 'user']  # один пользователь - один отзыв на товар
+    
+    def __str__(self):
+        return f"{self.user.username} - {self.product.name} - {self.rating}⭐"

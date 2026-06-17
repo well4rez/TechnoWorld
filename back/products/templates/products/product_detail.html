@@ -3,14 +3,14 @@
 {% block title %}{{ product.name }} - TechnoWorld{% endblock %}
 
 {% block content %}
-<div class="product-detail-container">
+<div class="product-detail-page">
     <div class="product-detail">
         <div class="product-detail-image">
             {% if product.image %}
-                <img src="{{ product.image.url }}" alt="{{ product.name }}" id="main-product-image" class="product-main-image">
+                <img src="{{ product.image.url }}" alt="{{ product.name }}" id="main-product-image">
             {% else %}
                 <div class="product-detail-placeholder" id="main-product-image">
-                     Нет фото
+                    📷 Нет фото
                 </div>
             {% endif %}
         </div>
@@ -20,93 +20,55 @@
             
             <div class="product-detail-meta">
                 <div class="meta-item">
-                    <strong>Бренд:</strong>
+                    <span class="meta-label">Бренд:</span>
                     {% if product.brand %}
                         {% if product.brand.image %}
                             <img src="{{ product.brand.image.url }}" alt="{{ product.brand.name }}" class="brand-logo">
                         {% endif %}
-                        {{ product.brand.name }}
+                        <span class="meta-value">{{ product.brand.name }}</span>
                     {% else %}
-                        Не указан
+                        <span class="meta-value">Не указан</span>
                     {% endif %}
                 </div>
-                
                 <div class="meta-item">
-                    <strong>Категория:</strong>
+                    <span class="meta-label">Категория:</span>
                     {% if product.category.image %}
                         <img src="{{ product.category.image.url }}" alt="{{ product.category.name }}" class="brand-logo">
                     {% endif %}
-                    {{ product.category.name }}
+                    <span class="meta-value">{{ product.category.name }}</span>
                 </div>
             </div>
             
-            <!-- Выбор вариаций -->
-            {% if product.has_variants and product.variants.exists %}
-                <div class="variants-section">
-                    {% regroup product.variants.all by name as variant_groups %}
-                    {% for group in variant_groups %}
-                        <div class="variant-group">
-                            <div class="variant-buttons">
-                                {% for variant in group.list %}
-                                    <button type="button" 
-                                            class="variant-btn {% if forloop.first %}active{% endif %}" 
-                                            data-variant-id="{{ variant.id }}"
-                                            data-variant-price="{{ variant.get_price|floatformat:2 }}"
-                                            data-variant-image="{% if variant.image %}{{ variant.image.url }}{% endif %}"
-                                            data-variant-name="{{ variant.name }}"
-                                            data-variant-amount="{{ variant.amount }}">
-                                        {{ variant.name }}
-                                    </button>
-                                {% endfor %}
-                            </div>
-                        </div>
+            <!-- Рейтинг -->
+            <div class="product-rating">
+                <div class="rating-stars">
+                    {% for i in "12345"|make_list %}
+                        {% if forloop.counter <= product.aver_rating|floatformat:0|add:"0" %}
+                            <span class="star filled">★</span>
+                        {% elif forloop.counter <= product.aver_rating|floatformat:0|add:"1" and product.aver_rating|floatformat:0|add:"0" < product.aver_rating %}
+                            <span class="star half">★</span>
+                        {% else %}
+                            <span class="star empty">★</span>
+                        {% endif %}
                     {% endfor %}
+                    <span class="rating-text">{{ product.aver_rating|floatformat:1 }} ({{ product.rating_count }} отзывов)</span>
                 </div>
-                
-                <div class="product-price-section">
-                    <span class="price-label">Цена:</span>
-                    <span class="product-price" id="variant-price">
-                        {% with first_variant=product.variants.first %}
-                            {{ first_variant.get_price|floatformat:2 }}
-                        {% endwith %}
-                    </span>
-                    <span class="price-currency">₽</span>
-                </div>
-                
-                <div class="stock-status" id="variant-stock">
-                    В наличии: 
-                    <span id="variant-amount">
-                        {% with first_variant=product.variants.first %}
-                            {{ first_variant.amount }}
-                        {% endwith %}
-                    </span> шт.
-                </div>
-                
-                <form method="post" action="{% url 'products:add_to_cart' product.id %}" class="cart-form">
-                    {% csrf_token %}
-                    <input type="hidden" name="variant_id" id="selected_variant_id" value="{% with first_variant=product.variants.first %}{{ first_variant.id }}{% endwith %}">
-                    <input type="hidden" name="next" value="{{ request.path }}">
-                    <button type="submit" class="btn btn-cart" id="add-to-cart-btn">
-                         Добавить в корзину
-                    </button>
-                </form>
-            {% else %}
-                <div class="product-price-section">
-                    <span class="price-label">Цена:</span>
-                    <span class="product-price">{{ product.price|floatformat:2 }}</span>
-                    <span class="price-currency">₽</span>
-                </div>
-                
-                <div class="stock-status">
-                    В наличии: {{ product.amount }} шт.
-                </div>
-                
-                <form method="post" action="{% url 'products:add_to_cart' product.id %}" class="cart-form">
-                    {% csrf_token %}
-                    <input type="hidden" name="next" value="{{ request.path }}">
-                    <button type="submit" class="btn btn-cart"> Добавить в корзину</button>
-                </form>
-            {% endif %}
+            </div>
+            
+            <div class="product-detail-price-block">
+                <span class="price-label">Цена:</span>
+                <span class="product-detail-price">{{ product.price|floatformat:2 }}</span>
+                <span class="price-currency">₽</span>
+            </div>
+            
+            <div class="product-detail-stock">
+                ✅ В наличии: {{ product.amount }} шт.
+            </div>
+            
+            <form method="post" action="{% url 'products:add_to_cart' product.id %}" class="add-to-cart-form">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-cart">🛒 Добавить в корзину</button>
+            </form>
             
             <div class="product-detail-description">
                 <strong>Описание:</strong>
@@ -116,65 +78,76 @@
             <a href="{% url 'products:product_list' %}" class="back-link">← Назад к списку товаров</a>
         </div>
     </div>
-</div>
 
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const variantBtns = document.querySelectorAll('.variant-btn');
-        const variantPriceSpan = document.getElementById('variant-price');
-        const variantAmountSpan = document.getElementById('variant-amount');
-        const variantIdInput = document.getElementById('selected_variant_id');
-        const mainImage = document.getElementById('main-product-image');
-        const addToCartBtn = document.getElementById('add-to-cart-btn');
+    <!-- ========== БЛОК ОТЗЫВОВ ========== -->
+    <div class="reviews-section">
+        <h2>💬 Отзывы</h2>
         
-        if (variantBtns.length > 0) {
-            variantBtns.forEach(btn => {
-                btn.addEventListener('click', function() {
-                    // Убираем активный класс у всех кнопок в этой группе
-                    const parentGroup = this.closest('.variant-buttons');
-                    parentGroup.querySelectorAll('.variant-btn').forEach(b => {
-                        b.classList.remove('active');
-                    });
-                    
-                    // Добавляем активный класс текущей кнопке
-                    this.classList.add('active');
-                    
-                    // Получаем данные вариации
-                    const variantId = this.dataset.variantId;
-                    const variantPrice = this.dataset.variantPrice;
-                    const variantAmount = this.dataset.variantAmount;
-                    const variantName = this.dataset.variantName;
-                    const variantImage = this.dataset.variantImage;
-                    
-                    // Обновляем цену
-                    if (variantPriceSpan) {
-                        variantPriceSpan.textContent = variantPrice;
-                    }
-                    
-                    // Обновляем наличие
-                    if (variantAmountSpan) {
-                        variantAmountSpan.textContent = variantAmount;
-                    }
-                    
-                    // Обновляем изображение
-                    if (variantImage && variantImage !== 'None' && variantImage !== '' && mainImage) {
-                        if (mainImage.tagName === 'IMG') {
-                            mainImage.src = variantImage;
-                        }
-                    }
-                    
-                    // Обновляем hidden input
-                    if (variantIdInput) {
-                        variantIdInput.value = variantId;
-                    }
-                    
-                    // Меняем текст кнопки
-                    if (addToCartBtn && variantName) {
-                        addToCartBtn.textContent = ' Добавить ' + variantName + ' в корзину';
-                    }
-                });
-            });
-        }
-    });
-</script>
+        {% if request.user.is_authenticated %}
+            {% if user_review %}
+                <div class="user-review">
+                    <div class="user-review-header">
+                        <span class="user-review-author">Ваш отзыв</span>
+                        <span class="user-review-rating">
+                            {% for i in "12345"|make_list %}
+                                {% if forloop.counter <= user_review.rating %}
+                                    <span class="star filled">★</span>
+                                {% else %}
+                                    <span class="star empty">★</span>
+                                {% endif %}
+                            {% endfor %}
+                        </span>
+                    </div>
+                    <p class="user-review-text">{{ user_review.text }}</p>
+                </div>
+            {% else %}
+                <div class="review-form-container">
+                    <h3>Оставить отзыв</h3>
+                    <form method="post" action="">
+                        {% csrf_token %}
+                        <div class="form-group">
+                            <label for="id_rating">Оценка</label>
+                            {{ review_form.rating }}
+                        </div>
+                        <div class="form-group">
+                            <label for="id_text">Текст отзыва</label>
+                            {{ review_form.text }}
+                        </div>
+                        <button type="submit" class="btn btn-review">Отправить отзыв</button>
+                    </form>
+                </div>
+            {% endif %}
+        {% else %}
+            <p class="login-to-review">
+                <a href="{% url 'products:login' %}">Войдите</a>, чтобы оставить отзыв
+            </p>
+        {% endif %}
+        
+        <!-- Список отзывов -->
+        {% if reviews %}
+            <div class="reviews-list">
+                {% for review in reviews %}
+                    <div class="review-card">
+                        <div class="review-header">
+                            <span class="review-author">{{ review.user.username }}</span>
+                            <span class="review-rating">
+                                {% for i in "12345"|make_list %}
+                                    {% if forloop.counter <= review.rating %}
+                                        <span class="star filled">★</span>
+                                    {% else %}
+                                        <span class="star empty">★</span>
+                                    {% endif %}
+                                {% endfor %}
+                            </span>
+                            <span class="review-date">{{ review.created_at|date:"d.m.Y" }}</span>
+                        </div>
+                        <p class="review-text">{{ review.text }}</p>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="no-reviews">Пока нет отзывов. Будьте первым!</p>
+        {% endif %}
+    </div>
+</div>
 {% endblock %}

@@ -527,3 +527,59 @@ def profile_update(request):
         return redirect('products:profile')
     
     return redirect('products:profile')
+
+#ОТЗЫВЫ
+from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from .models import Product, Category, Review
+from .forms import ReviewForm
+
+def product_detail(request, slug):
+    product = get_object_or_404(Product, slug=slug)
+    categories = Category.objects.all()
+    reviews = product.reviews.filter(is_approved=True).order_by('-created_at')
+    
+    # Обновляем среднюю оценку
+    if reviews.exists():
+        avg = sum([r.rating for r in reviews]) / reviews.count()
+        product.aver_rating = round(avg, 2)
+        product.rating_count = reviews.count()
+        product.save(update_fields=['aver_rating', 'rating_count'])
+    
+    # Проверяем, может ли пользователь оставить отзыв
+    user_review = None
+    if request.user.is_authenticated:
+        user_review = Review.objects.filter(product=product, user=request.user).first()
+    
+    if request.method == 'POST' and request.user.is_authenticated:
+        if not user_review:
+            form = ReviewForm(request.POST)
+            if form.is_valid():
+                review = form.save(commit=False)
+                review.product = product
+                review.user = request.user
+                review.save()
+                messages.success(request, 'Ваш отзыв успешно добавлен!')
+                return redirect('products:product_detail', slug=product.slug)
+        else:
+            messages.warning(request, 'Вы уже оставили отзыв на этот товар')
+            return redirect('products:product_detail', slug=product.slug)
+    else:
+        form = ReviewForm()
+    
+    return render(request, 'products/product_detail.html', {
+        'product': product,
+        'categories': categories,
+        'reviews': reviews,
+        'review_form': form,
+        'user_review': user_review,
+    })
+@login_required
+@user_passes_test(is_admin)
+def delete_review(request, review_id):
+    review = get_object_or_404(Review, id=review_id)
+    product_slug = review.product.slug
+    review.delete()
+    messages.success(request, 'Отзыв удалён')
+    return redirect('products:product_detail', slug=product_slug)
