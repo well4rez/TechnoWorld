@@ -7,7 +7,7 @@
 <div class="profile-container">
     <div class="profile-header">
         <h1>Личный кабинет</h1>
-        <button class="btn-edit" onclick="toggleEdit()">✏️ Редактировать</button>
+        <button class="btn-edit" onclick="toggleEdit()"> Редактировать</button>
     </div>
 
     <div class="profile-card">
@@ -39,7 +39,7 @@
     </div>
 
     <div class="orders-section">
-        <h2>📦 Мои заказы</h2>
+        <h2> Мои заказы</h2>
         {% if orders %}
             <div class="orders-list">
                 {% for order in orders %}
@@ -65,7 +65,7 @@
                     <form method="post" action="{% url 'products:cancel_order' order.id %}" style="display: inline;">
                         {% csrf_token %}
                         <button type="submit" class="btn-cancel-order" onclick="return confirm('Вы уверены, что хотите отменить заказ #{{ order.id }}?')">
-                            ❌ Отменить заказ
+                             Отменить заказ
                         </button>
                     </form>
                     {% endif %}
@@ -91,11 +91,11 @@
         if (infoDiv.style.display === 'none') {
             infoDiv.style.display = 'block';
             editDiv.style.display = 'none';
-            editBtn.textContent = '✏️ Редактировать';
+            editBtn.textContent = ' Редактировать';
         } else {
             infoDiv.style.display = 'none';
             editDiv.style.display = 'block';
-            editBtn.textContent = '✖️ Отмена';
+            editBtn.textContent = ' Отмена';
         }
     }
 </script>

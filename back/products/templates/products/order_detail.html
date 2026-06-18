@@ -6,7 +6,7 @@
 {% block content %}
 <div class="order-detail-page">
     <div class="order-header">
-        <h1 class="order-title">📦 Заказ #{{ order.id }}</h1>
+        <h1 class="order-title"> Заказ #{{ order.id }}</h1>
         <div class="order-status-badge status-{{ order.status }}">
             {{ order.get_status_display }}
         </div>
@@ -16,7 +16,7 @@
         <!-- Левая колонка: информация о заказе -->
         <div class="order-info-column">
             <div class="order-card">
-                <h3>📋 Информация о заказе</h3>
+                <h3> Информация о заказе</h3>
                 <div class="order-info-list">
                     <div class="order-info-item">
                         <span class="info-label">Дата заказа:</span>
@@ -40,7 +40,7 @@
             </div>
 
             <div class="order-card">
-                <h3>📍 Данные доставки</h3>
+                <h3> Данные доставки</h3>
                 <div class="order-info-list">
                     <div class="order-info-item">
                         <span class="info-label">Адрес:</span>
@@ -59,7 +59,7 @@
 
             <!-- ====== САМОВЫВОЗ ====== -->
             <div class="order-card pickup-card">
-                <div class="pickup-icon">🏪</div>
+                <div class="pickup-icon"></div>
                 <h3>Вы можете забрать товар у нас в магазине</h3>
                 <div class="pickup-info">
                     <p><strong>Адрес:</strong> г. Норвинск, ул. Тестовая, д. 123</p>
@@ -72,7 +72,7 @@
         <!-- Правая колонка: товары в заказе -->
         <div class="order-items-column">
             <div class="order-card">
-                <h3>🛍️ Товары в заказе</h3>
+                <h3> Товары в заказе</h3>
                 <div class="order-items-list">
                     {% for item in order.items.all %}
                     <div class="order-item-card">
@@ -107,7 +107,7 @@
                 <form method="post" action="{% url 'products:cancel_order' order.id %}" style="display: inline;">
                     {% csrf_token %}
                     <button type="submit" class="btn btn-danger" onclick="return confirm('Вы уверены, что хотите отменить заказ #{{ order.id }}?')">
-                        ❌ Отменить заказ
+                         Отменить заказ
                     </button>
                 </form>
                 {% endif %}

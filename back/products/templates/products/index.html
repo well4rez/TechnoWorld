@@ -20,12 +20,12 @@
         
         <div class="sort-section">
             <label class="sort-label">Сортировать по:</label>
-            <select class="sort-select" onchange="location.href=this.value">
-                <option value="?sort=newest">Новинки</option>
-                <option value="?sort=price_asc">Цена: по возрастанию</option>
-                <option value="?sort=price_desc">Цена: по убыванию</option>
-                <option value="?sort=name_asc">Название: А-Я</option>
-                <option value="?sort=name_desc">Название: Я-А</option>
+            <select class="sort-select" id="sort-select" onchange="applySort()">
+                <option value="newest" {% if request.GET.sort == 'newest' or not request.GET.sort %}selected{% endif %}>Новинки</option>
+                <option value="price_asc" {% if request.GET.sort == 'price_asc' %}selected{% endif %}>Цена: по возрастанию</option>
+                <option value="price_desc" {% if request.GET.sort == 'price_desc' %}selected{% endif %}>Цена: по убыванию</option>
+                <option value="name_asc" {% if request.GET.sort == 'name_asc' %}selected{% endif %}>Название: А-Я</option>
+                <option value="name_desc" {% if request.GET.sort == 'name_desc' %}selected{% endif %}>Название: Я-А</option>
             </select>
         </div>
     </div>
@@ -41,7 +41,7 @@
                 <img src="{{ product.image.url }}" alt="{{ product.name }}" class="product-image">
                 {% else %}
                 <div class="product-image-placeholder">
-                    <span>📷</span>
+                    <span></span>
                 </div>
                 {% endif %}
             </a>
@@ -81,7 +81,7 @@
             <form method="post" action="{% url 'products:add_to_cart' product.id %}" class="add-to-cart-form">
                 {% csrf_token %}
                 <button type="submit" class="btn-cart" {% if product.amount == 0 %}disabled{% endif %}>
-                    🛒 В корзину
+                     В корзину
                 </button>
             </form>
         </div>
@@ -89,11 +89,20 @@
     </div>
     {% else %}
     <div class="empty-state">
-        <div class="empty-state-icon">🔍</div>
+        <div class="empty-state-icon"></div>
         <h3>Товаров не найдено</h3>
         <p>Попробуйте изменить поисковый запрос или выберите другую категорию</p>
         <a href="{% url 'products:product_list' %}" class="btn">Сбросить фильтры</a>
     </div>
     {% endif %}
 </div>
+<script>
+    function applySort() {
+        var select = document.getElementById('sort-select');
+        var sortValue = select.value;
+        var url = new URL(window.location.href);
+        url.searchParams.set('sort', sortValue);
+        window.location.href = url.toString();
+    }
+</script>
 {% endblock %}

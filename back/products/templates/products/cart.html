@@ -1,12 +1,11 @@
 {% extends 'products/base.html' %}
-{% load price_filters %}
 
 {% block title %}Корзина - TechnoWorld{% endblock %}
 
 {% block content %}
 <div class="cart-container">
     <div class="cart-header">
-        <h1 class="cart-title">🛒 Корзина</h1>
+        <h1 class="cart-title"> Корзина</h1>
         <div class="cart-count">{% if items %}{{ items|length }} товаров{% endif %}</div>
     </div>
 
@@ -29,7 +28,7 @@
                         {% if item.product.image %}
                         <img src="{{ item.product.image.url }}" alt="{{ item.product.name }}" class="cart-product-image">
                         {% else %}
-                        <div class="cart-product-placeholder">📷</div>
+                        <div class="cart-product-placeholder"></div>
                         {% endif %}
                         <div class="cart-product-info">
                             <a href="{% url 'products:product_detail' item.product.slug %}" class="cart-product-name">
@@ -40,41 +39,44 @@
                             {% endif %}
                         </div>
                     </td>
-                    <td class="cart-price">{{ item.price_at_moment|format_price }} ₽</td>
+                    <td class="cart-price">{{ item.price_at_moment|floatformat:0 }} ₽</td>
                     <td>
-                        <div class="cart-quantity-wrapper">
-                            <form method="post" action="{% url 'products:update_cart_quantity' item.id %}" class="cart-quantity-form">
-                                {% csrf_token %}
-                                <div class="quantity-wrapper">
-                                    <input type="number" 
-                                           name="quantity" 
-                                           value="{{ item.quantity }}" 
-                                           min="1" 
-                                           max="{% if item.variant %}{{ item.variant.amount }}{% else %}{{ item.product.amount }}{% endif %}" 
-                                           class="cart-quantity-input">
-                                    <button type="submit" class="cart-update-btn">Обновить</button>
-                                </div>
-                            </form>
-                            <div class="cart-stock-info">
+                    <div class="cart-quantity-wrapper">
+                        <div class="quantity-selector cart-qty">
+                            <button type="button" class="qty-btn-cart" onclick="changeCartQty('{{ item.id }}', -1)">−</button>
+                            <input type="number" id="qty-{{ item.id }}" value="{{ item.quantity }}" min="1" max="
                                 {% if item.variant %}
-                                    Доступно: {{ item.variant.amount }} шт.
-                                    {% if item.variant.amount == 0 %}
-                                        <span class="out">(нет в наличии)</span>
-                                    {% elif item.variant.amount <= 5 %}
-                                        <span class="limited">(заканчивается)</span>
-                                    {% endif %}
+                                    {{ item.variant.amount }}
                                 {% else %}
-                                    Доступно: {{ item.product.amount }} шт.
-                                    {% if item.product.amount == 0 %}
-                                        <span class="out">(нет в наличии)</span>
-                                    {% elif item.product.amount <= 5 %}
-                                        <span class="limited">(заканчивается)</span>
-                                    {% endif %}
+                                    {{ item.product.amount }}
                                 {% endif %}
-                            </div>
+                            " onchange="updateCartQty('{{ item.id }}')">
+                            <button type="button" class="qty-btn-cart" onclick="changeCartQty('{{ item.id }}', 1)">+</button>
                         </div>
-                    </td>
-                    <td class="cart-total">{{ item.get_total|format_price }} ₽</td>
+                        <form method="post" action="{% url 'products:update_cart_quantity' item.id %}" class="cart-quantity-form" id="cart-form-{{ item.id }}">
+                            {% csrf_token %}
+                            <input type="hidden" name="quantity" id="hidden-qty-{{ item.id }}" value="{{ item.quantity }}">
+                        </form>
+                        <div class="cart-stock-info">
+                            {% if item.variant %}
+                                Доступно: {{ item.variant.amount }} шт.
+                                {% if item.variant.amount == 0 %}
+                                    <span class="out">(нет в наличии)</span>
+                                {% elif item.variant.amount <= 5 %}
+                                    <span class="limited">(заканчивается)</span>
+                                {% endif %}
+                            {% else %}
+                                Доступно: {{ item.product.amount }} шт.
+                                {% if item.product.amount == 0 %}
+                                    <span class="out">(нет в наличии)</span>
+                                {% elif item.product.amount <= 5 %}
+                                    <span class="limited">(заканчивается)</span>
+                                {% endif %}
+                            {% endif %}
+                        </div>
+                    </div>
+                </td>
+                    <td class="cart-total">{{ item.get_total|floatformat:0 }} ₽</td>
                     <td class="cart-remove-cell">
                         <a href="{% url 'products:remove_from_cart' item.id %}" class="cart-remove-btn">Удалить</a>
                     </td>
@@ -84,7 +86,7 @@
             <tfoot>
                 <tr>
                     <td colspan="3" class="cart-total-label"><strong>Итого:</strong></td>
-                    <td class="cart-grand-total"><strong>{{ total_price|format_price }} ₽</strong></td>
+                    <td class="cart-grand-total"><strong>{{ total_price|floatformat:0 }} ₽</strong></td>
                     <td></td>
                 </tr>
             </tfoot>
@@ -102,11 +104,46 @@
     
     {% else %}
     <div class="empty-cart">
-        <div class="empty-cart-icon">🛒</div>
+        <div class="empty-cart-icon"></div>
         <h3>Корзина пуста</h3>
         <p>Добавьте товары из каталога</p>
         <a href="{% url 'products:product_list' %}" class="btn btn-primary">Перейти в каталог</a>
     </div>
     {% endif %}
 </div>
+
+<script>
+    function changeCartQty(itemId, delta) {
+        var input = document.getElementById('qty-' + itemId);
+        var hidden = document.getElementById('hidden-qty-' + itemId);
+        var current = parseInt(input.value) || 1;
+        var max = parseInt(input.getAttribute('max')) || 999;
+        var newVal = current + delta;
+        
+        if (newVal < 1) newVal = 1;
+        if (newVal > max) newVal = max;
+        
+        input.value = newVal;
+        hidden.value = newVal;
+        
+        var form = document.getElementById('cart-form-' + itemId);
+        form.submit();
+    }
+    
+    function updateCartQty(itemId) {
+        var input = document.getElementById('qty-' + itemId);
+        var hidden = document.getElementById('hidden-qty-' + itemId);
+        var max = parseInt(input.getAttribute('max')) || 999;
+        var val = parseInt(input.value) || 1;
+        
+        if (val < 1) val = 1;
+        if (val > max) val = max;
+        
+        input.value = val;
+        hidden.value = val;
+        
+        var form = document.getElementById('cart-form-' + itemId);
+        form.submit();
+    }
+</script>
 {% endblock %}

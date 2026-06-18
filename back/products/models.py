@@ -404,4 +404,4 @@ class Review(models.Model):
         return user.is_authenticated and (user.is_superuser or user.role == 'admin' or user.role == 'manager')
     
     def __str__(self):
-        return f"{self.user.username} - {self.product.name} - {self.rating}⭐"
+        return f"{self.user.username} - {self.product.name} - {self.rating}"

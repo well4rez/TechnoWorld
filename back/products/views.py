@@ -1,3 +1,4 @@
+from django.http import JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.decorators import login_required, user_passes_test
@@ -9,23 +10,41 @@ from .forms import RegistrationForm, LoginForm, AdminRegistrationForm, AddProduc
 from django.db import models
 from .forms import MessageToAdminForm
 import json
-
+from .models import Product, Category, Review
+from .forms import ReviewForm
+from django.views.decorators.http import require_POST
 
 def product_list(request):
     query = request.GET.get('q', '').strip()
     products = Product.objects.order_by('-created_at')
     categories = Category.objects.all()
-
-    cart = get_cart(request)
-    cart_items_count = cart.items.count() if cart else 0
-
+    
+    # Сохраняем поисковый запрос
     if query:
         products = products.filter(name__icontains=query)
-
+    
+    # ====== СОРТИРОВКА ======
+    sort = request.GET.get('sort', 'newest')
+    
+    if sort == 'price_asc':
+        products = products.order_by('price')
+    elif sort == 'price_desc':
+        products = products.order_by('-price')
+    elif sort == 'name_asc':
+        products = products.order_by('name')
+    elif sort == 'name_desc':
+        products = products.order_by('-name')
+    else:  # newest
+        products = products.order_by('-created_at')
+    
+    cart = get_cart(request)
+    cart_items_count = cart.items.count() if cart else 0
+    
     return render(request, 'products/index.html', {
         'products': products,
         'categories': categories,
         'cart_items_count': cart_items_count,
+        'current_sort': sort,
     })
 
 def product_detail(request, slug):
@@ -43,8 +62,6 @@ def product_detail(request, slug):
     # Получаем выбранную вариацию
     variant_id = request.GET.get('variant')
     selected_variant = None
-
-    print("VARIANT_ID:", variant_id)
     
     if product.has_variants and product.variants.exists():
         if variant_id:
@@ -55,7 +72,16 @@ def product_detail(request, slug):
         else:
             selected_variant = product.variants.filter(is_active=True).first()
     
-    # Проверяем, может ли пользователь оставить отзыв
+    cart_item = None
+    if request.user.is_authenticated:
+        cart = get_cart(request)
+        if cart:
+            cart_item = CartItem.objects.filter(
+                cart=cart, 
+                product=product,
+                variant=selected_variant
+            ).first()
+    
     user_review = None
     if request.user.is_authenticated:
         user_review = Review.objects.filter(product=product, user=request.user).first()
@@ -83,17 +109,33 @@ def product_detail(request, slug):
         'review_form': form,
         'user_review': user_review,
         'selected_variant': selected_variant,
+        'cart_item': cart_item,
     })
+    
 
 def category_products(request, slug):
     category = get_object_or_404(Category, slug=slug)
     products = Product.objects.filter(category=category)
     categories = Category.objects.all()
-
+    
+    sort = request.GET.get('sort', 'newest')
+    
+    if sort == 'price_asc':
+        products = products.order_by('price')
+    elif sort == 'price_desc':
+        products = products.order_by('-price')
+    elif sort == 'name_asc':
+        products = products.order_by('name')
+    elif sort == 'name_desc':
+        products = products.order_by('-name')
+    else:
+        products = products.order_by('-created_at')
+    
     return render(request, 'products/category_products.html', {
         'products': products,
         'categories': categories,
-        'current_category': category
+        'current_category': category,
+        'current_sort': sort,
     })
 
 # РЕГИСТРАЦИЯ (для гостей - обычная)
@@ -362,7 +404,12 @@ def add_to_cart(request, product_id):
     cart = get_cart(request)
     variant_id = request.POST.get('variant_id') or request.GET.get('variant_id')
     variant = None
-
+    
+    try:
+        quantity = int(request.POST.get('quantity', 1))
+    except ValueError:
+        quantity = 1
+    
     if variant_id:
         variant = get_object_or_404(ProductVariant, id=variant_id)
         stock_available = variant.amount
@@ -373,33 +420,36 @@ def add_to_cart(request, product_id):
         messages.error(request, 'Товар временно отсутствует на складе')
         return redirect(request.META.get('HTTP_REFERER', '/'))
     
+    if quantity > stock_available:
+        messages.warning(request, f'Доступно только {stock_available} шт.')
+        return redirect(request.META.get('HTTP_REFERER', '/'))
+    
     cart_item = CartItem.objects.filter(cart=cart, product=product, variant=variant).first()
     
     if cart_item:
-        if cart_item.quantity + 1 > stock_available:
+        if cart_item.quantity + quantity > stock_available:
             messages.warning(request, f'Доступно только {stock_available} шт.')
             return redirect(request.META.get('HTTP_REFERER', '/'))
-        cart_item.quantity += 1
+        cart_item.quantity += quantity
         cart_item.save()
         messages.success(request, f'Количество увеличено до {cart_item.quantity}')
     else:
-        if 1 > stock_available:
-            messages.warning(request, f'Доступно только {stock_available} шт.')
-            return redirect(request.META.get('HTTP_REFERER', '/'))
-        
         CartItem.objects.create(
             cart=cart,
             product=product,
             variant=variant,
-            quantity=1,
+            quantity=quantity,
             price_at_moment=variant.get_price() if variant else product.price
         )
         messages.success(request, f'Товар добавлен в корзину')
     
     return redirect(request.META.get('HTTP_REFERER', '/'))
 
-
+@login_required
 def cart_view(request):
+    if not request.user.is_authenticated:
+        messages.warning(request, 'Для просмотра корзины необходимо авторизоваться')
+        return redirect('products:login')
     cart = get_cart(request)
     items = cart.items.all() if cart else []
     total_price = cart.get_total_price() if cart else 0
@@ -617,13 +667,18 @@ def profile_update(request):
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from .models import Product, Category, Review
-from .forms import ReviewForm
+
 
 def product_detail(request, slug):
     product = get_object_or_404(Product, slug=slug)
     categories = Category.objects.all()
     reviews = product.reviews.filter(is_approved=True).order_by('-created_at')
+
+    if request.method == 'POST':
+        # Проверяем, авторизован ли пользователь
+        if not request.user.is_authenticated:
+            messages.warning(request, 'Для отправки отзыва необходимо авторизоваться')
+            return redirect('products:login')
     
     # Обновляем среднюю оценку
     if reviews.exists():
@@ -713,3 +768,75 @@ def cancel_order(request, order_id):
     # Возвращаемся туда, откуда пришли
     next_url = request.META.get('HTTP_REFERER', 'products:profile')
     return redirect(next_url)
+
+@login_required
+@user_passes_test(is_admin)
+def delete_user(request, user_id):
+    target_user = get_object_or_404(User, id=user_id)
+    if target_user.is_superuser:
+        messages.error(request, 'Нельзя удалить суперпользователя')
+        return redirect('products:user_list')
+    
+    if target_user == request.user:
+        messages.error(request, 'Нельзя удалить самого себя')
+        return redirect('products:user_list')
+    
+    target_user.delete()
+    messages.success(request, f'Пользователь {target_user.username} удалён')
+    return redirect('products:user_list')
+
+# интерактивная панель добавления в корзину и изменения количества
+@login_required
+@require_POST
+def update_cart_item_ajax(request, item_id):
+    """Обновление количества в корзине через AJAX"""
+    cart = get_cart(request)
+    item = get_object_or_404(CartItem, id=item_id, cart=cart)
+    
+    try:
+        delta = int(request.POST.get('delta', 0))
+        new_quantity = item.quantity + delta
+    except ValueError:
+        return JsonResponse({'error': 'Неверное значение'}, status=400)
+    
+    if item.variant:
+        stock_available = item.variant.amount
+    else:
+        stock_available = item.product.amount
+    
+    if new_quantity <= 0:
+        item.delete()
+        return JsonResponse({
+            'success': True,
+            'action': 'removed',
+            'item_id': item_id,
+        })
+    elif new_quantity > stock_available:
+        return JsonResponse({
+            'error': f'Доступно только {stock_available} шт.'
+        }, status=400)
+    else:
+        item.quantity = new_quantity
+        item.save()
+        return JsonResponse({
+            'success': True,
+            'action': 'updated',
+            'item_id': item_id,
+            'quantity': new_quantity,
+            'total': float(item.get_total()),
+            'cart_total': float(get_cart(request).get_total_price()),
+        })
+
+@login_required
+@require_POST
+def remove_from_cart_ajax(request, item_id):
+    """Удаление товара из корзины через AJAX"""
+    cart = get_cart(request)
+    item = get_object_or_404(CartItem, id=item_id, cart=cart)
+    item.delete()
+    return JsonResponse({
+        'success': True,
+        'action': 'removed',
+        'item_id': item_id,
+    })
+

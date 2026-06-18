@@ -62,10 +62,11 @@ class OrderItemAdmin(ModelAdmin):
     list_filter = ['order__status']
     search_fields = ['product_name']
 
+# 👇 ОДНА РЕГИСТРАЦИЯ USER (с защитой от удаления суперпользователя)
 @admin.register(User)
 class CustomUserAdmin(ModelAdmin):
-    list_display = ['id', 'username', 'email', 'phone', 'role', 'is_staff', 'is_active']
-    list_filter = ['role', 'is_staff', 'is_active']
+    list_display = ['id', 'username', 'email', 'phone', 'role', 'is_superuser', 'is_active']
+    list_filter = ['role', 'is_superuser', 'is_active']
     search_fields = ['username', 'email', 'phone']
     fieldsets = (
         ('Основная информация', {
@@ -77,10 +78,18 @@ class CustomUserAdmin(ModelAdmin):
         ('Права доступа', {
             'fields': ('role', 'is_active', 'is_staff', 'is_superuser', 'groups')
         }),
-        ('Бонусы', {
-            'fields': ('bonus_points',)
-        }),
     )
+    
+    def get_actions(self, request):
+        actions = super().get_actions(request)
+        if 'delete_selected' in actions:
+            del actions['delete_selected']
+        return actions
+    
+    def has_delete_permission(self, request, obj=None):
+        if obj and obj.is_superuser:
+            return False
+        return super().has_delete_permission(request, obj)
 
 @admin.register(Request)
 class RequestAdmin(ModelAdmin):

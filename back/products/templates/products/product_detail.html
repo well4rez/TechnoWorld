@@ -1,5 +1,4 @@
 {% extends 'products/base.html' %}
-{% load price_filters %}
 
 {% block title %}{{ product.name }} - TechnoWorld{% endblock %}
 
@@ -14,7 +13,7 @@
                 <img src="{{ product.image.url }}" alt="{{ product.name }}" id="main-product-image">
             {% else %}
                 <div class="product-detail-placeholder" id="main-product-image">
-                    📷 Нет фото
+                     Нет фото
                 </div>
             {% endif %}
         </div>
@@ -48,13 +47,12 @@
                         <div class="variant-group">
                             <div class="variant-buttons">
                                 {% for variant in group.list %}
-                                                <a href="?variant={{ variant.id }}"
-                                                    class="variant-btn {% if selected_variant.id == variant.id %}active{% endif %}"
-                                                    data-variant-id="{{ variant.id }}"
-                                                    data-price="{% if variant.get_price %}{{ variant.get_price|floatformat:2 }}{% else %}{{ product.price|floatformat:2 }}{% endif %}"
-                                                    data-price-formatted="{% if variant.get_price %}{{ variant.get_price|format_price }}{% else %}{{ product.price|format_price }}{% endif %}"
-                                                    data-amount="{{ variant.amount }}"
-                                                    data-image-url="{% if variant.image %}{{ variant.image.url }}{% elif product.image %}{{ product.image.url }}{% else %}{% endif %}">
+                                    <a href="?variant={{ variant.id }}"
+                                       class="variant-btn {% if selected_variant.id == variant.id %}active{% endif %}"
+                                       data-variant-id="{{ variant.id }}"
+                                       data-price="{% if variant.get_price %}{{ variant.get_price|floatformat:2 }}{% else %}{{ product.price|floatformat:2 }}{% endif %}"
+                                       data-amount="{{ variant.amount }}"
+                                       data-image-url="{% if variant.image %}{{ variant.image.url }}{% elif product.image %}{{ product.image.url }}{% else %}{% endif %}">
                                         {{ variant.name }}
                                     </a>
                                 {% endfor %}
@@ -69,9 +67,9 @@
                 <span class="price-label">Цена:</span>
                 <span class="product-price" id="variant-price">
                     {% if selected_variant %}
-                        {{ selected_variant.get_price|format_price }}
+                        {{ selected_variant.get_price|floatformat:2 }}
                     {% else %}
-                        {{ product.price|format_price }}
+                        {{ product.price|floatformat:2 }}
                     {% endif %}
                 </span>
                 <span class="price-currency">₽</span>
@@ -89,21 +87,22 @@
                 </span> шт.
             </div>
             
-            <!-- ====== КОРЗИНА ====== -->
-            <form method="post" action="{% url 'products:add_to_cart' product.id %}" class="cart-form">
-                {% csrf_token %}
-                {% if selected_variant %}
-                    <input type="hidden" name="variant_id" value="{{ selected_variant.id }}">
-                {% endif %}
-                <button type="submit" class="btn btn-cart">
-                    🛒 Добавить в корзину
-                </button>
-            </form>
+            <!-- Простая форма добавления в корзину (без селектора количества) -->
+            <div class="cart-section">
+                <form method="post" action="{% url 'products:add_to_cart' product.id %}" id="add-to-cart-form" class="cart-form">
+                    {% csrf_token %}
+                    {% if selected_variant %}
+                        <input type="hidden" name="variant_id" value="{{ selected_variant.id }}">
+                    {% endif %}
+                    <input type="hidden" name="quantity" value="1">
+                    <button type="submit" class="btn btn-cart"> Добавить в корзину</button>
+                </form>
+            </div>
             {% else %}
             <!-- Товар без вариаций -->
             <div class="product-price-section">
                 <span class="price-label">Цена:</span>
-                <span class="product-price">{{ product.price|format_price }}</span>
+                <span class="product-price">{{ product.price|floatformat:2 }}</span>
                 <span class="price-currency">₽</span>
             </div>
             
@@ -111,10 +110,15 @@
                 В наличии: {{ product.amount }} шт.
             </div>
             
-            <form method="post" action="{% url 'products:add_to_cart' product.id %}" class="cart-form">
-                {% csrf_token %}
-                <button type="submit" class="btn btn-cart">🛒 Добавить в корзину</button>
-            </form>
+            <!-- Простая форма добавления в корзину (без селектора количества) -->
+            <div class="cart-section">
+                <div class="stock-info-text">Доступно: {{ product.amount }} шт.</div>
+                <form method="post" action="{% url 'products:add_to_cart' product.id %}" class="cart-form" id="add-to-cart-form">
+                    {% csrf_token %}
+                    <input type="hidden" name="quantity" value="1">
+                    <button type="submit" class="btn btn-cart"> Добавить в корзину</button>
+                </form>
+            </div>
             {% endif %}
             
             <!-- ====== ОПИСАНИЕ ====== -->
@@ -129,7 +133,7 @@
 
     <!-- ====== ОТЗЫВЫ ====== -->
     <div class="reviews-section">
-        <h2>💬 Отзывы</h2>
+        <h2> Отзывы</h2>
         
         {% if request.user.is_authenticated %}
             {% if user_review %}
@@ -192,7 +196,7 @@
                         {% if user.is_authenticated and user.is_superuser or user.role == 'admin' or user.role == 'manager' %}
                         <form method="post" action="{% url 'products:delete_review' review.id %}" style="display: inline; margin-left: auto;">
                             {% csrf_token %}
-                            <button type="submit" class="review-delete-btn" onclick="return confirm('Удалить этот отзыв?')">Удалить</button>
+                            <button type="submit" class="review-delete-btn" onclick="return confirm('Удалить этот отзыв?')"></button>
                         </form>
                         {% endif %}
                     </div>
@@ -202,7 +206,7 @@
                     {% if review.admin_reply %}
                     <div class="review-reply">
                         <div class="reply-header">
-                            <span class="reply-author">{{ review.admin_replied_by.username }} (менеджер)</span>
+                            <span class="reply-author"> {{ review.admin_replied_by.username }} (менеджер)</span>
                             <span class="reply-date">{{ review.admin_replied_at|date:"d.m.Y H:i" }}</span>
                         </div>
                         <p class="reply-text">{{ review.admin_reply }}</p>
@@ -212,7 +216,7 @@
                     <!-- Форма ответа для менеджера/админа -->
                     {% if user.is_authenticated and user.is_superuser or user.role == 'admin' or user.role == 'manager' %}
                     <div class="reply-form-container">
-                        <button class="reply-toggle-btn" onclick="toggleReplyForm('reply-form-{{ review.id }}')">Ответить</button>
+                        <button class="reply-toggle-btn" onclick="toggleReplyForm('reply-form-{{ review.id }}')"> Ответить</button>
                         <form method="post" action="{% url 'products:reply_review' review.id %}" class="reply-form" id="reply-form-{{ review.id }}" style="display: none;">
                             {% csrf_token %}
                             <div class="form-group">
@@ -243,15 +247,16 @@
             }
         }
     }
-
+    
+    
+    
     // ====== ФУНКЦИЯ ДЛЯ ВАРИАЦИЙ ======
     document.addEventListener('DOMContentLoaded', function() {
         var variantBtns = document.querySelectorAll('.variant-btn');
         var priceEl = document.getElementById('variant-price');
         var amountEl = document.getElementById('variant-amount');
         var mainImageEl = document.getElementById('main-product-image');
-        var cartForm = document.querySelector('.cart-form');
-
+        
         function replaceMainImage(url) {
             if (!url) return;
             var current = document.getElementById('main-product-image');
@@ -265,65 +270,67 @@
                 current.parentNode.replaceChild(img, current);
             }
         }
-
+        
         if (variantBtns.length) {
             variantBtns.forEach(function(btn) {
                 btn.addEventListener('click', function(e) {
                     e.preventDefault();
-
+                    
                     variantBtns.forEach(function(b) { b.classList.remove('active'); });
                     btn.classList.add('active');
-
+                    
                     var imageUrl = btn.dataset.imageUrl || '';
                     var price = btn.dataset.price || '';
-                    var priceFormatted = btn.dataset.priceFormatted || '';
-                    var amount = btn.dataset.amount || '';
+                    var amount = parseInt(btn.dataset.amount) || 0;
                     var variantId = btn.dataset.variantId || '';
-
-                    if (priceEl) {
-                        if (priceFormatted && priceFormatted !== '') {
-                            priceEl.textContent = priceFormatted;
-                        } else if (price !== '') {
-                            if (window.priceUtils && typeof window.priceUtils.formatNumberWithSpaces === 'function') {
-                                priceEl.textContent = window.priceUtils.formatNumberWithSpaces(price);
-                            } else {
-                                priceEl.textContent = price;
-                            }
-                        }
-                    }
-                    if (amountEl && amount !== '') amountEl.textContent = amount;
+                    
+                    // Обновляем цену
+                    if (priceEl && price !== '') priceEl.textContent = price;
+                    
+                    // Обновляем наличие
+                    if (amountEl) amountEl.textContent = amount;
+                    
+                    // Обновляем изображение
                     if (imageUrl) replaceMainImage(imageUrl);
-
-                    if (cartForm) {
-                        var hidden = cartForm.querySelector('input[name="variant_id"]');
+                    
+                    // Обновляем наличие в простом блоке
+                    if (amountEl) amountEl.textContent = amount;
+                    
+                    // Обновляем hidden input в форме
+                    var addForm = document.getElementById('add-to-cart-form');
+                    if (addForm) {
+                        var hidden = addForm.querySelector('input[name="variant_id"]');
                         if (!hidden) {
                             hidden = document.createElement('input');
                             hidden.type = 'hidden';
                             hidden.name = 'variant_id';
-                            cartForm.appendChild(hidden);
+                            addForm.appendChild(hidden);
                         }
                         hidden.value = variantId;
                     }
-
+                    
+                    // Обновляем URL без перезагрузки
                     try {
                         var url = new URL(window.location.href);
                         if (variantId) url.searchParams.set('variant', variantId);
                         else url.searchParams.delete('variant');
                         history.replaceState({}, '', url);
-                    } catch (err) { /* ignore URL errors */ }
+                    } catch (err) { /* ignore */ }
                 });
             });
         }
-
+        
+        // Если сервер передал selected_variant, обновляем форму
         {% if selected_variant %}
         (function() {
-            if (cartForm) {
-                var hv = cartForm.querySelector('input[name="variant_id"]');
+            var addForm = document.getElementById('add-to-cart-form');
+            if (addForm) {
+                var hv = addForm.querySelector('input[name="variant_id"]');
                 if (!hv) {
                     hv = document.createElement('input');
                     hv.type = 'hidden';
                     hv.name = 'variant_id';
-                    cartForm.appendChild(hv);
+                    addForm.appendChild(hv);
                 }
                 hv.value = '{{ selected_variant.id }}';
             }

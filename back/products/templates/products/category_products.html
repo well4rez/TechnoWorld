@@ -29,7 +29,7 @@
                 <img src="{{ product.image.url }}" alt="{{ product.name }}" class="product-image">
                 {% else %}
                 <div class="product-image-placeholder">
-                    <span>📷</span>
+                    <span></span>
                 </div>
                 {% endif %}
             </a>
@@ -64,7 +64,7 @@
             <form method="post" action="{% url 'products:add_to_cart' product.id %}" class="add-to-cart-form">
                 {% csrf_token %}
                 <button type="submit" class="btn-cart" {% if product.amount == 0 %}disabled{% endif %}>
-                    🛒 В корзину
+                     В корзину
                 </button>
             </form>
         </div>
@@ -73,7 +73,7 @@
     
     {% else %}
     <div class="empty-category">
-        <div class="empty-category-icon">🔍</div>
+        <div class="empty-category-icon"></div>
         <h3>В этой категории пока нет товаров</h3>
         <p>Загляните позже — мы постоянно пополняем ассортимент!</p>
         <a href="{% url 'products:product_list' %}" class="btn btn-primary">На главную</a>
