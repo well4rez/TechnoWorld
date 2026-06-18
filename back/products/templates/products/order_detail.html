@@ -74,13 +74,20 @@
             <div class="order-card">
                 <h3> Товары в заказе</h3>
                 <div class="order-items-list">
-                    {% for item in order.items.all %}
+                    {% for item in items %}
                     <div class="order-item-card">
                         <div class="order-item-info">
-                            <div class="order-item-name">{{ item.product_name }}</div>
-                            {% if item.variant_name %}
-                            <div class="order-item-variant">{{ item.variant_name }}</div>
+                            {% if item.image_url %}
+                            <img src="{{ item.image_url }}" alt="{{ item.product_name }}" class="order-item-image">
+                            {% else %}
+                            <div class="order-item-placeholder"></div>
                             {% endif %}
+                            <div>
+                                <div class="order-item-name">{{ item.product_name }}</div>
+                                {% if item.variant_name %}
+                                <div class="order-item-variant">{{ item.variant_name }}</div>
+                                {% endif %}
+                            </div>
                         </div>
                         <div class="order-item-meta">
                             <span class="order-item-quantity">× {{ item.quantity }}</span>

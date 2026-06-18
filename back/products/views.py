@@ -623,7 +623,24 @@ def order_detail(request, order_id):
             messages.error(request, 'У вас нет доступа к этому заказу')
             return redirect('products:product_list')
     
-    return render(request, 'products/order_detail.html', {'order': order})
+    # Привязываем изображение: сначала пробуем найти вариацию по имени, иначе используем изображение продукта (если есть)
+    items = list(order.items.all())
+    for item in items:
+        image_url = ''
+        try:
+            product = Product.objects.filter(name=item.product_name).first()
+            if product:
+                if item.variant_name:
+                    variant = product.variants.filter(name=item.variant_name).first()
+                    if variant and variant.image:
+                        image_url = variant.image.url
+                if not image_url and product.image:
+                    image_url = product.image.url
+        except Exception:
+            image_url = ''
+        item.image_url = image_url
+
+    return render(request, 'products/order_detail.html', {'order': order, 'items': items})
 
 @login_required
 @user_passes_test(is_admin)

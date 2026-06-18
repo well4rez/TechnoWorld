@@ -7,7 +7,8 @@
 }
 
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    /* font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; */
+    font-family:Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
     background-color: #0a0a0a;
     color: #ffffff;
     padding: 0;
@@ -352,7 +353,7 @@ body {
     padding: 14px 20px;
     border-radius: 10px;
     font-size: 14px;
-    font-family: Arial, sans-serif;
+    font-family: 'Arial', sans-serif;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
     animation: slideInRight 0.3s ease-out;
     display: flex;

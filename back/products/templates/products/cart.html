@@ -25,7 +25,9 @@
                 {% for item in items %}
                 <tr>
                     <td class="cart-product-cell">
-                        {% if item.product.image %}
+                        {% if item.variant and item.variant.image %}
+                        <img src="{{ item.variant.image.url }}" alt="{{ item.product.name }} {{ item.variant.name }}" class="cart-product-image">
+                        {% elif item.product.image %}
                         <img src="{{ item.product.image.url }}" alt="{{ item.product.name }}" class="cart-product-image">
                         {% else %}
                         <div class="cart-product-placeholder"></div>

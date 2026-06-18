@@ -6,9 +6,15 @@
 {% block content %}
 <div class="catalog-container">
     <!-- Фильтры и сортировка -->
-    <div class="filters-section">
+    <div class="filters-section" id="filters-section">
+    <div class="filters-toggle" onclick="toggleFilters()">
+        <span class="filters-toggle-text">Фильтры</span>
+        <span class="filters-toggle-icon" id="filters-icon">▼</span>
+    </div>
+    
+    <div class="filters-content" id="filters-content">
         <div class="categories-filter">
-            <button class="filter-btn {% if not current_category %}active{% endif %}" onclick="location.href='/'">
+            <button class="filter-btn {% if not current_category %}active{% endif %}" onclick="location.href='/'" style="font-family:Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;">
                 Все товары
             </button>
             {% for category in categories %}
@@ -20,15 +26,16 @@
         
         <div class="sort-section">
             <label class="sort-label">Сортировать по:</label>
-            <select class="sort-select" id="sort-select" onchange="applySort()">
-                <option value="newest" {% if request.GET.sort == 'newest' or not request.GET.sort %}selected{% endif %}>Новинки</option>
-                <option value="price_asc" {% if request.GET.sort == 'price_asc' %}selected{% endif %}>Цена: по возрастанию</option>
-                <option value="price_desc" {% if request.GET.sort == 'price_desc' %}selected{% endif %}>Цена: по убыванию</option>
-                <option value="name_asc" {% if request.GET.sort == 'name_asc' %}selected{% endif %}>Название: А-Я</option>
-                <option value="name_desc" {% if request.GET.sort == 'name_desc' %}selected{% endif %}>Название: Я-А</option>
+            <select class="sort-select" style="font-family:Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;" id="sort-select" onchange="applySort()">
+                <option value="newest" {% if current_sort == 'newest' or not current_sort %}selected{% endif %}>Новинки</option>
+                <option value="price_asc" {% if current_sort == 'price_asc' %}selected{% endif %}>Цена: по возрастанию</option>
+                <option value="price_desc" {% if current_sort == 'price_desc' %}selected{% endif %}>Цена: по убыванию</option>
+                <option value="name_asc" {% if current_sort == 'name_asc' %}selected{% endif %}>Название: А-Я</option>
+                <option value="name_desc" {% if current_sort == 'name_desc' %}selected{% endif %}>Название: Я-А</option>
             </select>
         </div>
     </div>
+</div>
 
     <!-- Сетка товаров -->
     {% if products %}
@@ -80,7 +87,7 @@
             <!-- Кнопка -->
             <form method="post" action="{% url 'products:add_to_cart' product.id %}" class="add-to-cart-form">
                 {% csrf_token %}
-                <button type="submit" class="btn-cart" {% if product.amount == 0 %}disabled{% endif %}>
+                <button type="submit" class="btn-cart" style="font-family:Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;" {% if product.amount == 0 %}disabled{% endif %}>
                      В корзину
                 </button>
             </form>
@@ -97,12 +104,29 @@
     {% endif %}
 </div>
 <script>
+    function toggleFilters() {
+        var content = document.getElementById('filters-content');
+        var icon = document.getElementById('filters-icon');
+        
+        if (content.style.display === 'none' || content.style.display === '') {
+            content.style.display = 'flex';
+            icon.textContent = '▲';
+        } else {
+            content.style.display = 'none';
+            icon.textContent = '▼';
+        }
+    }
+    
     function applySort() {
         var select = document.getElementById('sort-select');
-        var sortValue = select.value;
         var url = new URL(window.location.href);
-        url.searchParams.set('sort', sortValue);
+        url.searchParams.set('sort', select.value);
         window.location.href = url.toString();
     }
+    
+    // По умолчанию свернуто
+    document.addEventListener('DOMContentLoaded', function() {
+        document.getElementById('filters-content').style.display = 'none';
+    });
 </script>
 {% endblock %}

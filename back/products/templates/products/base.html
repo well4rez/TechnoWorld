@@ -23,7 +23,7 @@
                 
                 <form method="get" action="{% url 'products:product_list' %}" class="search-form">
                     <input type="text" name="q" placeholder="Поиск по названию" value="{{ request.GET.q }}">
-                    <button type="submit">Найти</button>
+                    <button type="submit" style="font-family:Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;">Найти</button>
                     <a href="{% url 'products:product_list' %}" class="btn btn-outline">Сбросить</a>
                 </form>
             </div>
@@ -47,29 +47,30 @@
                             <a href="{% url 'products:create_request' 'add_product' %}">Добавить товар</a>
                             <a href="{% url 'products:create_request' 'edit_product' %}">Редактировать товар</a>
                             <a href="{% url 'products:message_to_admin' %}">Сообщение админу</a>
-                            <a href="{% url 'products:my_requests' %}">Мои заявки</a>
                         </div>
                     </div>
                 {% endif %}
                 
                 {% if user.is_authenticated %}
-                <div class="dropdown-container">
                     <a href="{% url 'products:cart_view' %}" class="cart-link">
                         Корзина {% if cart_items_count %}<span class="cart-count">{{ cart_items_count }}</span>{% endif %}
                     </a>
-                    <button onclick="toggleDropdown('userDropdown')" class="btn-user">{{ user.username }} ▼</button>
-                    <div id="userDropdown" class="dropdown-menu">
-                        <a href="{% url 'products:profile' %}">Профиль</a>
-                        {% if user.role == 'manager' or user.role == 'admin' %}
-                        <a href="{% url 'products:my_requests' %}">Мои заявки</a>
-                        {% endif %}
-                        <hr>
-                        <form method="post" action="{% url 'products:logout' %}">
-                            {% csrf_token %}
-                            <button type="submit" class="dropdown-logout">Выйти</button>
-                        </form>
+                    <div class="dropdown-container">
+                        <button onclick="toggleDropdown('userDropdown')" class="btn-user" style="font-family:Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;">
+                            {{ user.username }} ▼
+                        </button>
+                        <div id="userDropdown" class="dropdown-menu">
+                            <a href="{% url 'products:profile' %}">Профиль</a>
+                            {% if user.role == 'manager' %}
+                            <a href="{% url 'products:my_requests' %}">Мои заявки</a>
+                            {% endif %}
+                            <hr>
+                            <form method="post" action="{% url 'products:logout' %}">
+                                {% csrf_token %}
+                                <button type="submit" class="dropdown-logout">Выйти</button>
+                            </form>
+                        </div>
                     </div>
-                </div>
                 {% else %}
                     <a href="{% url 'products:login' %}" class="btn">Войти</a>
                     <a href="{% url 'products:register' %}" class="btn">Регистрация</a>
