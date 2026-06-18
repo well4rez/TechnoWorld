@@ -400,6 +400,9 @@ def get_cart(request):
             return cart
 
 def add_to_cart(request, product_id):
+    if not request.user.is_authenticated:
+        messages.warning(request, 'Для начала необходимо авторизоваться')
+        return redirect('products:login')
     product = get_object_or_404(Product, id=product_id)
     cart = get_cart(request)
     variant_id = request.POST.get('variant_id') or request.GET.get('variant_id')

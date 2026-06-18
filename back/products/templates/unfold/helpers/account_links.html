@@ -2,7 +2,7 @@
 
 {% if site_url %}
     <a href="{{ site_url }}" class="mx-1 px-3 py-2 rounded-default hover:bg-base-100 hover:text-base-700 dark:hover:bg-base-700 dark:hover:text-base-200" target="_self">
-        {% trans "View site" %}
+        {% trans "Вернуться к сайту" %}
     </a>
 {% endif %}
 
@@ -15,7 +15,7 @@
 {% else %}
     {% if user.has_usable_password %}
         <a href="{% url 'admin:password_change' %}" class="mx-1 px-3 py-2 rounded-default hover:bg-base-100 hover:text-base-700 dark:hover:bg-base-700 dark:hover:text-base-200">
-            {% trans "Change password" %}
+            {% trans "Сменить пароль" %}
         </a>
     {% endif %}
 {% endif %}
@@ -25,7 +25,7 @@
         {% csrf_token %}
 
         <button type="submit" class="bg-none flex cursor-pointer items-center px-3 py-1.5 text-left text-red-700 rounded-default w-full hover:bg-red-100 dark:hover:bg-red-500/20 dark:text-red-400 dark:hover:text-red-400">
-            {% trans "Log out" %} <span class="ml-auto material-symbols-outlined text-red-700 dark:text-red-400">logout</span>
+            {% trans "Выйти" %} <span class="ml-auto material-symbols-outlined text-red-700 dark:text-red-400">logout</span>
         </button>
     </form>
 </div>

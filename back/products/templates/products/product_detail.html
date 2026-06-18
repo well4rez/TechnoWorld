@@ -196,7 +196,7 @@
                         {% if user.is_authenticated and user.is_superuser or user.role == 'admin' or user.role == 'manager' %}
                         <form method="post" action="{% url 'products:delete_review' review.id %}" style="display: inline; margin-left: auto;">
                             {% csrf_token %}
-                            <button type="submit" class="review-delete-btn" onclick="return confirm('Удалить этот отзыв?')"></button>
+                            <button type="submit" class="review-delete-btn" onclick="return confirm('Удалить этот отзыв?')">Удалить</button>
                         </form>
                         {% endif %}
                     </div>
