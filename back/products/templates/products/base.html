@@ -1,8 +1,7 @@
 {% load static %}
 <!DOCTYPE html>
 <html lang="ru">
-    <head>
-    <script src="{% static 'js/price_format.js' %}"></script>
+<head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}TechnoWorld{% endblock %}</title>
@@ -20,7 +19,7 @@
             <h1><a href="/">TechnoWorld</a></h1>
             
             <div class="header-nav">
-                <a href="{% url 'products:categories_list' %}" class="btn"> Каталог</a>
+                <a href="{% url 'products:categories_list' %}" class="btn">Каталог</a>
                 
                 <form method="get" action="{% url 'products:product_list' %}" class="search-form">
                     <input type="text" name="q" placeholder="Поиск по названию" value="{{ request.GET.q }}">
@@ -30,7 +29,6 @@
             </div>
             
             <div class="header-actions">
-
                 {% if user.is_superuser or user.role == 'admin' %}
                 <div class="dropdown-container">
                     <button onclick="toggleDropdown('adminDropdown')" class="btn-admin">Админ панель ▼</button>
@@ -57,7 +55,7 @@
                 {% if user.is_authenticated %}
                 <div class="dropdown-container">
                     <a href="{% url 'products:cart_view' %}" class="cart-link">
-                         Корзина {% if cart_items_count %}<span class="cart-count">{{ cart_items_count }}</span>{% endif %}
+                        Корзина {% if cart_items_count %}<span class="cart-count">{{ cart_items_count }}</span>{% endif %}
                     </a>
                     <button onclick="toggleDropdown('userDropdown')" class="btn-user">{{ user.username }} ▼</button>
                     <div id="userDropdown" class="dropdown-menu">
@@ -80,10 +78,16 @@
         </div>
     </div>
 
+    <!-- Скрытые сообщения Django для тостов -->
     {% if messages %}
         <div style="display: none;">
             {% for message in messages %}
-                <div class="django-message" data-type="{% if message.tags == 'error' %}error{% elif message.tags == 'success' %}success{% elif message.tags == 'info' %}info{% else %}warning{% endif %}">
+                <div class="django-message" data-type="
+                    {% if message.tags == 'error' %}error
+                    {% elif message.tags == 'success' %}success
+                    {% elif message.tags == 'info' %}info
+                    {% else %}warning{% endif %}
+                ">
                     {{ message }}
                 </div>
             {% endfor %}
@@ -119,7 +123,7 @@
             
             <div class="footer-section">
                 <h3>Социальные сети</h3>
-                <p><a href="#">📘 Telegram</a></p>
+                <p><a href="#">Telegram</a></p>
             </div>
         </div>
         <div class="footer-bottom">
@@ -132,7 +136,6 @@
             var dropdown = document.getElementById(dropdownId);
             var isOpen = dropdown.classList.contains('show');
             
-            // Закрываем все меню
             var allMenus = document.querySelectorAll('.dropdown-menu');
             allMenus.forEach(function(menu) {
                 menu.classList.remove('show');
@@ -165,8 +168,10 @@
             
             setTimeout(function() {
                 toast.classList.add('fade-out');
-                setTimeout(function() { toast.remove(); }, 200);
-            }, 5000);
+                setTimeout(function() {
+                    if (toast.parentElement) toast.remove();
+                }, 300);
+            }, 4000);
         }
         
         document.addEventListener('DOMContentLoaded', function() {
